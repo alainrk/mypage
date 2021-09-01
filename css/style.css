@@ -7,7 +7,7 @@
 }
 
 :root {
-  --text-color: #0d6e0d;
+  --text-color: #128b12;
 }
 
 body {
@@ -88,7 +88,8 @@ nav ul li {
 @keyframes blink {
   from,
   to {
-    color: transparent;
+    
+    : transparent;
   }
 
   50% {
