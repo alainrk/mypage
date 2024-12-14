@@ -25,7 +25,7 @@ document.addEventListener("keydown", handleKeyPress);
 function handleKeyPress(e) {
   if (
     !gameStarted &&
-    ["w", "a", "s", "d", "W", "A", "S", "D"].includes(e.key)
+    ["w", "a", "s", "d", "r", "W", "A", "S", "D", "R"].includes(e.key)
   ) {
     gameStarted = true;
     messageElement.style.display = "none";
@@ -55,6 +55,9 @@ function handleKeyPress(e) {
         dx = 1;
         dy = 0;
       }
+      break;
+    case "r":
+      resetGame();
       break;
   }
 }
@@ -98,7 +101,8 @@ function moveSnake() {
 
   if (head.x === food.x && head.y === food.y) {
     score += 10;
-    scoreElement.textContent = `Score: ${score}`;
+    scoreElement.textContent = `${score}`;
+    scoreElement.style.display = "block";
     generateFood();
   } else {
     snake.pop();
@@ -153,6 +157,11 @@ function generateFood() {
   });
 }
 
+function pauseGame() {
+  gameStarted = false;
+  messageElement.style.display = "block";
+}
+
 function resetGame() {
   snake = [
     { x: 10, y: 10 },
@@ -164,8 +173,8 @@ function resetGame() {
   dy = -1;
   score = 0;
   gameStarted = false;
-  messageElement.style.display = "block";
-  scoreElement.textContent = `Score: ${score}`;
+  messageElement.style.display = "none";
+  scoreElement.textContent = "";
   generateFood();
 }
 
