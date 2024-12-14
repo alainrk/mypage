@@ -5,6 +5,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="images/favicon.svg" rel="shortcut icon" />
+    <script>
+      setTimeout(() => location.reload(), 5000);
+    </script>
     <link
       href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,400,700&display=swap"
       rel="stylesheet"
@@ -17,12 +20,13 @@
   <body>
     <div class="container" id="content">
       <header>
-        <h3>
-          <a id="propmp" href="https://alaindichiappari.dev"
+        <h2>
+          <a id="prompt" href="https://alaindichiappari.dev"
             >alainrk:$<span class="cursor">▒</span></a
           >
-        </h3>
+        </h2>
       </header>
+
       <section id="about">
         I'm Alain Di Chiappari, software engineer, computer scientist
         specialized in systems and networks, OS contributor and passionate about
@@ -38,8 +42,83 @@
         >.
       </section>
 
+      <section id="posts">
+        <h3>Latest posts</h3>
+        <article>
+          <atitle>Tactical vs Strategic Developers</atitle>
+          <asubtitle>A Philosophy of Software Design </asubtitle>
+          <content
+            >In the world of software creation, developers have different ways
+            of thinking and working. In his enlightening book "A Philosophy of
+            Software Design," John Ousterhout talks about the ideas and methods
+            that make software design work well (or at least better). One
+            important thing he discusses is the difference between tactical and
+            strategic developers. This helps us understand the various
+            approaches these developers use when creating software, and why the
+            modern approaches that companies adopt bring to a dangerous path....
+            <readmore
+              ><a
+                href="https://weekendengineering.substack.com/p/tactical-vs-strategic-developers"
+                target="_blank"
+                >Read more</a
+              ></readmore
+            >
+          </content>
+        </article>
+
+        <article>
+          <atitle>Death by configuration parameters</atitle>
+          <asubtitle>Where to place complexity? </asubtitle>
+          <content
+            >Deeper modules provide a significantly better interface, concealing
+            complexity and enhancing clarity and readability. However, this
+            improvement does not come without a cost. It demands better design
+            and more thoughtful choices. A crucial factor in this process is
+            complexity management, and we understand that it is not always
+            feasible to eliminate it entirely. Sometimes, it is inherent in the
+            domain we operate in, or it arises from real-world scenarios.
+            Additionally, in many 'fast-paced' work environments, those who
+            contribute (directly or indirectly) to the design of a system are
+            often rewarded for short-term choices rather than for long-term
+            sustainability...
+            <readmore
+              ><a
+                href="https://weekendengineering.substack.com/p/death-by-configuration-parameters"
+                target="_blank"
+                >Read more</a
+              ></readmore
+            >
+          </content>
+        </article>
+
+        <article>
+          <atitle>Sabotage 101: Company Culture Meltdown</atitle>
+          <asubtitle
+            >Playbook for destroying company and engineering culture
+          </asubtitle>
+          <content
+            >It doesn’t matter if you are an executive pushed by shareholders’
+            anxiety, a director facing tough decisions, or a manager tasked with
+            reshaping their team. You have to do your part and turn everything
+            upside down, even if it means destroying the current culture in
+            favor of a greater benefit, such as company profitability, your
+            superiors’ profitability, or, if you’re lucky enough, your own
+            profitability. In these cases, you can't just wing it. There are a
+            few concepts to reconsider in a new light and a dedicated playbook
+            to follow step-by-step...
+            <readmore
+              ><a
+                href="https://weekendengineering.substack.com/p/sabotage-101-company-culture-meltdown"
+                target="_blank"
+                >Read more</a
+              ></readmore
+            >
+          </content>
+        </article>
+      </section>
+
       <section>
-        <h4>Other stuff I've published</h4>
+        <h3>Other stuff I've published</h3>
         <ul>
           <li>
             <a href="assets/sensquare.pdf" target="_blank"

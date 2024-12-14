@@ -5,20 +5,23 @@
 }
 
 :root {
-  --text-color: #06c006;
+  --color-primary: #06c006;
+  --color-secondary: #7e97a6;
+  --color-tertiary: #b6f7c1;
+  --color-normal: #eeeeee;
 }
 
 body {
   font-family: "Roboto Mono", sans-serif;
   background-color: rgb(32, 29, 29);
-  color: rgb(236, 236, 236);
+  color: var(--color-normal);
   font-size: 15px;
   line-height: 1.2;
-  font-weight: 100;
+  font-weight: 200;
 }
 
 a {
-  color: var(--text-color);
+  color: var(--color-tertiary);
   text-decoration: none;
 }
 
@@ -55,9 +58,50 @@ section {
   margin-bottom: 2em;
 }
 
-h4 {
-  font-weight: 600;
+h2 {
   margin-bottom: 0.5em;
+}
+
+h3 {
+  color: var(--color-primary);
+  margin-bottom: 1em;
+}
+
+h4 {
+  margin-bottom: 0.5em;
+}
+
+article {
+  margin-bottom: 2.5em;
+  /* Take the entire x-space */
+  display: block;
+  width: 100%;
+}
+
+atitle {
+  font-weight: 400;
+  margin-bottom: 0.5em;
+  /* Take the entire x-space */
+  display: block;
+  width: 100%;
+}
+
+asubtitle {
+  font-weight: 100;
+  font-style: italic;
+  margin-bottom: 0.5em;
+  color: var(--color-secondary);
+  /* Take the entire x-space */
+  display: block;
+  width: 100%;
+}
+
+content {
+  font-weight: 100;
+  margin-bottom: 0.5em;
+  /* Take the entire x-space */
+  display: block;
+  width: 100%;
 }
 
 @keyframes blink {
@@ -67,7 +111,7 @@ h4 {
   }
 
   50% {
-    color: var(--text-color);
+    color: var(--color-primary);
   }
 }
 
@@ -78,10 +122,10 @@ h4 {
   padding-bottom: 4em;
 }
 
-header#prompt {
-  width: 100%;
-  margin-bottom: 1em;
-  font-weight: 900;
+a#prompt {
+  color: var(--color-primary);
+  font-size: 1.2em;
+  text-decoration: none;
 }
 
 @media screen and (max-width: 1200px) {
