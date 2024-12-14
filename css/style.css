@@ -142,19 +142,10 @@ canvas {
   background-color: var(--color-background);
 }
 
-#score {
-  color: var(--color-secondary);
-  font-size: 24px;
-  margin: 0px 0;
-  display: none;
-}
-
 #message {
   color: var(--color-secondary);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  font-size: 15px;
+  margin: 3px 0;
   display: none;
 }
 

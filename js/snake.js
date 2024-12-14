@@ -1,6 +1,7 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const scoreElement = document.getElementById("score");
+const msgElement = document.getElementById("message");
+const msg = "[WASD] to move, P/R pause/restart.";
 
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
@@ -23,13 +24,22 @@ const gameSpeed = 100;
 
 document.addEventListener("keydown", handleKeyPress);
 
+function setMsgToScore() {
+  msgElement.textContent = `${score}`;
+  msgElement.style.display = "block";
+}
+
+function setMsgToHelp() {
+  msgElement.textContent = msg;
+  msgElement.style.display = "block";
+}
+
 function handleKeyPress(e) {
   if (
     !gameStarted &&
     ["w", "a", "s", "d", "r", "p", "W", "A", "S", "D", "R", "P"].includes(e.key)
   ) {
     gameStarted = true;
-    messageElement.style.display = "none";
   }
 
   switch (e.key.toLowerCase()) {
@@ -111,8 +121,8 @@ function moveSnake() {
 
   if (head.x === food.x && head.y === food.y) {
     score += 10;
-    scoreElement.textContent = `${score}`;
-    scoreElement.style.display = "block";
+    msgElement.textContent = `${score}`;
+    msgElement.style.display = "block";
     generateFood();
   } else {
     snake.pop();
@@ -169,12 +179,12 @@ function generateFood() {
 
 function resumeGame() {
   gamePaused = false;
-  messageElement.style.display = "none";
+  setMsgToScore();
 }
 
 function pauseGame() {
   gamePaused = true;
-  messageElement.style.display = "block";
+  setMsgToHelp();
 }
 
 function resetGame() {
@@ -188,10 +198,8 @@ function resetGame() {
   dy = -1;
   score = 0;
   gameStarted = false;
-  messageElement.style.display = "none";
-  scoreElement.textContent = "";
+  setMsgToHelp();
   generateFood();
-  resumeGame();
 }
 
 drawGame();
