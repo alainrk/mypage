@@ -5,6 +5,7 @@
 }
 
 :root {
+  --color-background: #201d1d;
   --color-primary: #06c006;
   --color-secondary: #7e97a6;
   --color-tertiary: #b6f7c1;
@@ -13,7 +14,7 @@
 
 body {
   font-family: "Roboto Mono", sans-serif;
-  background-color: rgb(32, 29, 29);
+  background-color: var(--color-background);
   color: var(--color-normal);
   font-size: 15px;
   line-height: 1.2;
@@ -50,7 +51,7 @@ nav ul li {
   margin: 0;
   padding: 0.5em;
   text-align: center;
-  background-color: rgb(32, 29, 29);
+  background-color: var(--color-background);
 }
 
 section {
@@ -132,8 +133,40 @@ a#prompt {
   #content {
     width: 90%;
   }
+}
 
-  img {
-    max-width: 80%;
+/* Snake */
+
+canvas {
+  border: 2px solid var(--color-secondary);
+  background-color: var(--color-background);
+}
+
+#score {
+  color: var(--color-secondary);
+  font-size: 24px;
+  margin: 10px 0;
+  display: none;
+}
+
+#message {
+  color: var(--color-secondary);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: none;
+}
+
+#snake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 800px) {
+  #snake {
+    display: none;
   }
 }
