@@ -1,23 +1,21 @@
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
+/* * { */
+/*   box-sizing: border-box; */
+/*   padding: 0; */
+/*   margin: 0; */
+/*   font-weight: 100; */
+/* } */
 
 :root {
-  --text-color: #0d6e0d;
+  --text-color: #06c006;
 }
 
 body {
   font-family: "Roboto Mono", sans-serif;
   background-color: rgb(32, 29, 29);
   color: rgb(236, 236, 236);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.2;
-}
-
-ul {
-  list-style-type: none;
+  font-weight: 100;
 }
 
 a {
@@ -25,18 +23,7 @@ a {
   text-decoration: none;
 }
 
-p {
-  margin: 20px 0;
-}
-
-nav ul {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-}
-
 nav ul li {
-  color: var(--text-color);
   cursor: pointer;
 }
 
@@ -50,7 +37,7 @@ nav ul li {
 }
 
 .cursor {
-  font-weight: 700;
+  margin-left: 5px;
   animation: 1s blink step-end infinite;
 }
 
@@ -64,6 +51,16 @@ nav ul li {
   background-color: rgb(32, 29, 29);
 }
 
+section {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+h4 {
+  font-weight: 600;
+  margin-bottom: 0.5em;
+}
+
 @keyframes blink {
   from,
   to {
@@ -75,29 +72,22 @@ nav ul li {
   }
 }
 
-#about {
-  font-weight: 200;
-}
-
 #content {
   width: 50%;
+  max-width: 800px;
   margin: 2em auto;
   padding-bottom: 4em;
 }
 
-header {
+header#prompt {
   width: 100%;
   margin-bottom: 1em;
   font-weight: 900;
 }
 
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 1200px) {
   #content {
     width: 90%;
-  }
-
-  header {
-    width: 800px;
   }
 
   img {
