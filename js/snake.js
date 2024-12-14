@@ -17,6 +17,7 @@ let dx = 0;
 let dy = -1;
 let score = 0;
 let gameStarted = false;
+let gamePaused = false;
 let lastRenderTime = 0;
 const gameSpeed = 100;
 
@@ -25,7 +26,7 @@ document.addEventListener("keydown", handleKeyPress);
 function handleKeyPress(e) {
   if (
     !gameStarted &&
-    ["w", "a", "s", "d", "r", "W", "A", "S", "D", "R"].includes(e.key)
+    ["w", "a", "s", "d", "r", "p", "W", "A", "S", "D", "R", "P"].includes(e.key)
   ) {
     gameStarted = true;
     messageElement.style.display = "none";
@@ -33,28 +34,36 @@ function handleKeyPress(e) {
 
   switch (e.key.toLowerCase()) {
     case "w":
+      resumeGame();
       if (dy === 0) {
         dx = 0;
         dy = -1;
       }
       break;
     case "s":
+      resumeGame();
       if (dy === 0) {
         dx = 0;
         dy = 1;
       }
       break;
     case "a":
+      resumeGame();
       if (dx === 0) {
         dx = -1;
         dy = 0;
       }
       break;
     case "d":
+      resumeGame();
       if (dx === 0) {
         dx = 1;
         dy = 0;
       }
+      break;
+    case "p":
+      if (gamePaused) resumeGame();
+      else pauseGame();
       break;
     case "r":
       resetGame();
@@ -89,6 +98,7 @@ function drawGame() {
 }
 
 function moveSnake() {
+  if (gamePaused) return;
   const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
   // Wrap around edges
@@ -157,8 +167,13 @@ function generateFood() {
   });
 }
 
+function resumeGame() {
+  gamePaused = false;
+  messageElement.style.display = "none";
+}
+
 function pauseGame() {
-  gameStarted = false;
+  gamePaused = true;
   messageElement.style.display = "block";
 }
 
@@ -176,6 +191,7 @@ function resetGame() {
   messageElement.style.display = "none";
   scoreElement.textContent = "";
   generateFood();
+  resumeGame();
 }
 
 drawGame();
