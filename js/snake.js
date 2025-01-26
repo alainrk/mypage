@@ -2,6 +2,8 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const msgElement = document.getElementById("message");
 const msg = "[WASD] to move, P/R pause/restart.";
+let currentDirection = { dx: 0, dy: -1 };
+let nextDirection = { dx: 0, dy: -1 };
 
 const gridSize = 20;
 const tileCount = canvas.width / gridSize;
@@ -45,30 +47,26 @@ function handleKeyPress(e) {
   switch (e.key.toLowerCase()) {
     case "w":
       resumeGame();
-      if (dy === 0) {
-        dx = 0;
-        dy = -1;
+      if (currentDirection.dy !== 1) {
+        nextDirection = { dx: 0, dy: -1 };
       }
       break;
     case "s":
       resumeGame();
-      if (dy === 0) {
-        dx = 0;
-        dy = 1;
+      if (currentDirection.dy !== -1) {
+        nextDirection = { dx: 0, dy: 1 };
       }
       break;
     case "a":
       resumeGame();
-      if (dx === 0) {
-        dx = -1;
-        dy = 0;
+      if (currentDirection.dx !== 1) {
+        nextDirection = { dx: -1, dy: 0 };
       }
       break;
     case "d":
       resumeGame();
-      if (dx === 0) {
-        dx = 1;
-        dy = 0;
+      if (currentDirection.dx !== -1) {
+        nextDirection = { dx: 1, dy: 0 };
       }
       break;
     case "p":
@@ -109,7 +107,14 @@ function drawGame() {
 
 function moveSnake() {
   if (gamePaused) return;
-  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+  // Update current direction only when snake actually moves
+  currentDirection = { ...nextDirection };
+
+  const head = {
+    x: snake[0].x + currentDirection.dx,
+    y: snake[0].y + currentDirection.dy,
+  };
 
   // Wrap around edges
   if (head.x >= tileCount) head.x = 0;
@@ -194,8 +199,8 @@ function resetGame() {
     { x: 10, y: 12 },
     { x: 10, y: 13 },
   ];
-  dx = 0;
-  dy = -1;
+  currentDirection = { dx: 0, dy: -1 };
+  nextDirection = { dx: 0, dy: -1 };
   score = 0;
   gameStarted = false;
   setMsgToHelp();
