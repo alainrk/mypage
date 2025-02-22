@@ -2,22 +2,45 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const msgElement = document.getElementById("message");
 const msg = "[WASD] to move, P/R pause/restart.";
-let currentDirection = { dx: 0, dy: -1 };
-let nextDirection = { dx: 0, dy: -1 };
+
+const validDirections = [
+  [0, -1],
+  [0, 1],
+  [-1, 0],
+  [1, 0],
+];
+const startDir = Math.floor(Math.random() * validDirections.length);
+const currentDirection = {
+  dx: validDirections[startDir][0],
+  dy: validDirections[startDir][1],
+};
+const nextDirection = {
+  dx: validDirections[startDir][0],
+  dy: validDirections[startDir][1],
+};
 
 const gridSize = 20;
+const specialFoodRate = 5;
+const specialFoodExpiration = 50;
 const tileCount = canvas.width / gridSize;
 
 const messageElement = document.getElementById("message");
-let snake = [
-  { x: 10, y: 10 },
-  { x: 10, y: 11 },
-  { x: 10, y: 12 },
-  { x: 10, y: 13 },
+let startx = Math.floor(Math.random() * tileCount);
+let starty = Math.floor(Math.random() * tileCount);
+const snake = [
+  { x: startx, y: starty },
+  { x: startx, y: starty + 1 },
+  { x: startx, y: starty + 2 },
+  { x: startx, y: starty + 3 },
 ];
-let food = { x: 15, y: 15 };
-let dx = 0;
-let dy = -1;
+let food = { x: 15, y: 15, ate: 0 };
+let specialFood = {
+  x: -1,
+  y: -1,
+  expiration: specialFoodExpiration,
+  active: false,
+};
+
 let score = 0;
 let gameStarted = false;
 let gamePaused = false;
@@ -48,25 +71,29 @@ function handleKeyPress(e) {
     case "w":
       resumeGame();
       if (currentDirection.dy !== 1) {
-        nextDirection = { dx: 0, dy: -1 };
+        nextDirection.dx = 0;
+        nextDirection.dy = -1;
       }
       break;
     case "s":
       resumeGame();
       if (currentDirection.dy !== -1) {
-        nextDirection = { dx: 0, dy: 1 };
+        nextDirection.dx = 0;
+        nextDirection.dy = 1;
       }
       break;
     case "a":
       resumeGame();
       if (currentDirection.dx !== 1) {
-        nextDirection = { dx: -1, dy: 0 };
+        nextDirection.dx = -1;
+        nextDirection.dy = 0;
       }
       break;
     case "d":
       resumeGame();
       if (currentDirection.dx !== -1) {
-        nextDirection = { dx: 1, dy: 0 };
+        nextDirection.dx = 1;
+        nextDirection.dy = 0;
       }
       break;
     case "p":
@@ -101,6 +128,8 @@ function drawGame() {
   checkCollision();
   drawSnake();
   drawFood();
+  generateSpecialFood();
+  drawSpecialFood();
 
   requestAnimationFrame(drawGame);
 }
@@ -109,7 +138,8 @@ function moveSnake() {
   if (gamePaused) return;
 
   // Update current direction only when snake actually moves
-  currentDirection = { ...nextDirection };
+  currentDirection.dx = nextDirection.dx;
+  currentDirection.dy = nextDirection.dy;
 
   const head = {
     x: snake[0].x + currentDirection.dx,
@@ -124,10 +154,35 @@ function moveSnake() {
 
   snake.unshift(head);
 
+  if (specialFood.active && specialFood.expiration > 0) {
+    specialFood.expiration--;
+
+    // Remove it from the canvas if expired
+    if (specialFood.expiration <= 0) {
+      specialFood.x = -1;
+      specialFood.y = -1;
+    }
+
+    if (head.x === specialFood.x && head.y === specialFood.y) {
+      score += 50;
+      msgElement.textContent = `${score}`;
+      msgElement.style.display = "block";
+
+      // Remove it from the canvas if eaten
+      specialFood.x = -1;
+      specialFood.y = -1;
+    }
+  }
+
   if (head.x === food.x && head.y === food.y) {
     score += 10;
     msgElement.textContent = `${score}`;
     msgElement.style.display = "block";
+
+    // Only reset special food when normal food is eaten
+    if (specialFood.active && specialFood.expiration <= 0) {
+      specialFood.active = false;
+    }
     generateFood();
   } else {
     snake.pop();
@@ -169,15 +224,67 @@ function drawFood() {
   );
 }
 
-function generateFood() {
+function drawSpecialFood() {
+  // Defensive check, shouldn't be needed
+  if (
+    !specialFood.active ||
+    specialFood.expiration <= 0 ||
+    specialFood.x < 0 ||
+    specialFood.y < 0
+  )
+    return;
+
+  ctx.fillStyle = "red";
+  ctx.fillRect(
+    specialFood.x * gridSize,
+    specialFood.y * gridSize,
+    gridSize - 2,
+    gridSize - 2,
+  );
+}
+
+function generateFood(start = false) {
   food = {
     x: Math.floor(Math.random() * tileCount),
     y: Math.floor(Math.random() * tileCount),
+    ate: start ? 0 : food.ate + 1,
   };
+
   // Make sure food doesn't spawn on snake
   snake.forEach((segment) => {
     if (food.x === segment.x && food.y === segment.y) {
       generateFood();
+    }
+  });
+}
+
+function generateSpecialFood() {
+  if (
+    // Wait at least the minimum rate to generate the first special food.
+    food.ate < specialFoodRate ||
+    // Wait the rate-th occurrence of normal food.
+    food.ate % specialFoodRate !== 0 ||
+    // Special food already created.
+    specialFood.active
+  )
+    return;
+
+  specialFood = {
+    x: Math.floor(Math.random() * tileCount),
+    y: Math.floor(Math.random() * tileCount),
+    expiration: 50,
+    active: true,
+  };
+
+  // Make sure food doesn't spawn on normal food
+  if (specialFood.x === food.x && specialFood.y === food.y) {
+    generateSpecialFood();
+  }
+
+  // Make sure food doesn't spawn on snake
+  snake.forEach((segment) => {
+    if (food.x === segment.x && food.y === segment.y) {
+      generateSpecialFood();
     }
   });
 }
@@ -193,18 +300,29 @@ function pauseGame() {
 }
 
 function resetGame() {
-  snake = [
-    { x: 10, y: 10 },
-    { x: 10, y: 11 },
-    { x: 10, y: 12 },
-    { x: 10, y: 13 },
-  ];
-  currentDirection = { dx: 0, dy: -1 };
-  nextDirection = { dx: 0, dy: -1 };
+  let x = Math.floor(Math.random() * tileCount);
+  let y = Math.floor(Math.random() * tileCount);
+  while (snake.length > 0) {
+    snake.pop();
+  }
+  for (let i = 1; i <= 4; i++) {
+    snake.push({ x: x, y: y + i });
+  }
+
+  const startDir = Math.floor(Math.random() * validDirections.length);
+  currentDirection.dx = validDirections[startDir][0];
+  currentDirection.dy = validDirections[startDir][1];
+  nextDirection.dx = validDirections[startDir][0];
+  nextDirection.dy = validDirections[startDir][1];
+
+  specialFood.x = -1;
+  specialFood.y = -1;
+  specialFood.active = false;
+
   score = 0;
   gameStarted = false;
   setMsgToHelp();
-  generateFood();
+  generateFood(true);
 }
 
 drawGame();
