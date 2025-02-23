@@ -57,12 +57,21 @@ function setMsg(msg) {
 
 function handleKeyPress(e) {
   if (gameOver) {
-    // Only R key allowed to get out of Game Over.
     if (!["r", "R"].includes(e.key)) {
       return;
     }
 
     resetGame();
+    return;
+  }
+
+  if (gamePaused) {
+    if (["r", "R"].includes(e.key)) {
+      resetGame();
+    }
+    if (["p", "P"].includes(e.key)) {
+      resumeGame();
+    }
     return;
   }
 
@@ -75,36 +84,31 @@ function handleKeyPress(e) {
 
   switch (e.key.toLowerCase()) {
     case "w":
-      resumeGame();
       if (currentDirection.dy !== 1) {
         nextDirection.dx = 0;
         nextDirection.dy = -1;
       }
       break;
     case "s":
-      resumeGame();
       if (currentDirection.dy !== -1) {
         nextDirection.dx = 0;
         nextDirection.dy = 1;
       }
       break;
     case "a":
-      resumeGame();
       if (currentDirection.dx !== 1) {
         nextDirection.dx = -1;
         nextDirection.dy = 0;
       }
       break;
     case "d":
-      resumeGame();
       if (currentDirection.dx !== -1) {
         nextDirection.dx = 1;
         nextDirection.dy = 0;
       }
       break;
     case "p":
-      if (gamePaused) resumeGame();
-      else pauseGame();
+      pauseGame();
       break;
     case "r":
       resetGame();
@@ -112,10 +116,10 @@ function handleKeyPress(e) {
   }
 }
 
-function drawGame() {
+function mainLoop() {
   const currentTime = Date.now();
   if (currentTime - lastRenderTime < gameSpeed) {
-    requestAnimationFrame(drawGame);
+    requestAnimationFrame(mainLoop);
     return;
   }
   lastRenderTime = currentTime;
@@ -137,7 +141,7 @@ function drawGame() {
   generateSpecialFood();
   drawSpecialFood();
 
-  requestAnimationFrame(drawGame);
+  requestAnimationFrame(mainLoop);
 }
 
 function moveSnake() {
@@ -160,6 +164,7 @@ function moveSnake() {
 
   snake.unshift(head);
 
+  // Special food management.
   if (specialFood.active && specialFood.expiration > 0) {
     specialFood.expiration--;
 
@@ -180,6 +185,7 @@ function moveSnake() {
     }
   }
 
+  // Normal food management.
   if (head.x === food.x && head.y === food.y) {
     score += 10;
     msgElement.textContent = `${score}`;
@@ -312,20 +318,39 @@ function pauseGame() {
 }
 
 function resetGame() {
-  let x = Math.floor(Math.random() * tileCount);
-  let y = Math.floor(Math.random() * tileCount);
+  const startDir = Math.floor(Math.random() * validDirections.length);
+
+  currentDirection.dx = validDirections[startDir][0];
+  currentDirection.dy = validDirections[startDir][1];
+
+  nextDirection.dx = validDirections[startDir][0];
+  nextDirection.dy = validDirections[startDir][1];
+
+  // Clean up the snake.
   while (snake.length > 0) {
     snake.pop();
   }
-  for (let i = 1; i <= 4; i++) {
-    snake.push({ x: x, y: y + i });
-  }
 
-  const startDir = Math.floor(Math.random() * validDirections.length);
-  currentDirection.dx = validDirections[startDir][0];
-  currentDirection.dy = validDirections[startDir][1];
-  nextDirection.dx = validDirections[startDir][0];
-  nextDirection.dy = validDirections[startDir][1];
+  // Get the head randomly, but I want to avoid wrapping at the first iteration.
+  let x = Math.min(
+    tileCount - 4,
+    Math.max(4, Math.floor(Math.random() * tileCount)),
+  );
+  let y = Math.min(
+    tileCount - 4,
+    Math.max(4, Math.floor(Math.random() * tileCount)),
+  );
+
+  // Compose the snake.
+  // Push the head.
+  snake.push({ x: x, y: y });
+  for (let i = 3; i > 0; i--) {
+    // Push the rest of the snake according to direction.
+    snake.push({
+      x: x + i * currentDirection.dx,
+      y: y + i * currentDirection.dy,
+    });
+  }
 
   specialFood.x = -1;
   specialFood.y = -1;
@@ -333,9 +358,11 @@ function resetGame() {
 
   score = 0;
   gameStarted = false;
+  gamePaused = false;
   gameOver = false;
   setMsg(helpMessage);
   generateFood(true);
 }
 
-drawGame();
+resetGame();
+mainLoop();
