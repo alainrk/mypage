@@ -1,7 +1,6 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const msgElement = document.getElementById("message");
-const msg = "[WASD] to move, P/R pause/restart.";
 
 const validDirections = [
   [0, -1],
@@ -19,6 +18,7 @@ const nextDirection = {
   dy: validDirections[startDir][1],
 };
 
+const helpMessage = "[WASD] to move, P/R pause/restart.";
 const gridSize = 20;
 const specialFoodRate = 5;
 const specialFoodExpiration = 50;
@@ -42,6 +42,7 @@ let specialFood = {
 };
 
 let score = 0;
+let gameOver = false;
 let gameStarted = false;
 let gamePaused = false;
 let lastRenderTime = 0;
@@ -49,17 +50,22 @@ const gameSpeed = 100;
 
 document.addEventListener("keydown", handleKeyPress);
 
-function setMsgToScore() {
-  msgElement.textContent = `${score}`;
-  msgElement.style.display = "block";
-}
-
-function setMsgToHelp() {
+function setMsg(msg) {
   msgElement.textContent = msg;
   msgElement.style.display = "block";
 }
 
 function handleKeyPress(e) {
+  if (gameOver) {
+    // Only R key allowed to get out of Game Over.
+    if (!["r", "R"].includes(e.key)) {
+      return;
+    }
+
+    resetGame();
+    return;
+  }
+
   if (
     !gameStarted &&
     ["w", "a", "s", "d", "r", "p", "W", "A", "S", "D", "R", "P"].includes(e.key)
@@ -125,7 +131,7 @@ function drawGame() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   moveSnake();
-  checkCollision();
+  checkGameOver();
   drawSnake();
   drawFood();
   generateSpecialFood();
@@ -189,13 +195,19 @@ function moveSnake() {
   }
 }
 
-function checkCollision() {
+function checkGameOver() {
   const head = snake[0];
   for (let i = 1; i < snake.length; i++) {
     if (head.x === snake[i].x && head.y === snake[i].y) {
-      resetGame();
+      setGameOver();
     }
   }
+}
+
+function setGameOver() {
+  gameOver = true;
+  gamePaused = true;
+  setMsg(`Game Over! Score: ${score}. Press R to restart.`);
 }
 
 function drawSnake() {
@@ -291,12 +303,12 @@ function generateSpecialFood() {
 
 function resumeGame() {
   gamePaused = false;
-  setMsgToScore();
+  setMsg(`${score}`);
 }
 
 function pauseGame() {
   gamePaused = true;
-  setMsgToHelp();
+  setMsg(helpMessage);
 }
 
 function resetGame() {
@@ -321,7 +333,8 @@ function resetGame() {
 
   score = 0;
   gameStarted = false;
-  setMsgToHelp();
+  gameOver = false;
+  setMsg(helpMessage);
   generateFood(true);
 }
 
