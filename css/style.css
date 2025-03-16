@@ -38,29 +38,31 @@ a:hover {
   transform: translateX(2px);
 }
 
-/* Navigation hover effect */
-nav a:hover {
-  transform: none;
-  border-bottom: 1px solid var(--color-primary);
-}
-
+/* Navigation styling */
 nav {
   display: flex;
-  justify-content: center;
-  margin-top: 1em;
-  margin-bottom: 2em;
-  padding: 0.5em 0;
-  border-bottom: 1px solid rgba(126, 151, 166, 0.2);
+  justify-content: flex-start;
+  margin: 0.5em 0 2em 0;
+  padding: 0;
+  border: none;
 }
 
 nav ul {
   display: flex;
   list-style: none;
-  gap: 2em;
+  gap: 1.5em;
+  padding: 0;
 }
 
-nav ul li {
-  cursor: pointer;
+nav a {
+  color: var(--color-secondary);
+  font-size: 0.9em;
+  transition: all var(--transition-speed) ease;
+}
+
+nav a:hover {
+  color: var(--color-primary);
+  transform: none;
 }
 
 /* Back to top button */
