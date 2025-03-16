@@ -13,12 +13,14 @@ const currentDirection = {
   dx: validDirections[startDir][0],
   dy: validDirections[startDir][1],
 };
-const nextDirection = {
+
+const directionQueue = [];
+directionQueue.push({
   dx: validDirections[startDir][0],
   dy: validDirections[startDir][1],
-};
+});
 
-const helpMessage = "[WASD] to move, P/R pause/restart.";
+const helpMessage = "[WASD] Move [P] Pause/Resume [R] Restart";
 const gridSize = 20;
 const specialFoodRate = 5;
 const specialFoodExpiration = 50;
@@ -82,29 +84,32 @@ function handleKeyPress(e) {
     gameStarted = true;
   }
 
+  // Get the current direction (either from the snake's movement or from the first queued direction)
+  const currentDir =
+    directionQueue.length > 0
+      ? directionQueue[directionQueue.length - 1]
+      : currentDirection;
+
+  let newDirection;
   switch (e.key.toLowerCase()) {
     case "w":
-      if (currentDirection.dy !== 1) {
-        nextDirection.dx = 0;
-        nextDirection.dy = -1;
+      if (currentDir.dy !== 1) {
+        newDirection = { dx: 0, dy: -1 };
       }
       break;
     case "s":
-      if (currentDirection.dy !== -1) {
-        nextDirection.dx = 0;
-        nextDirection.dy = 1;
+      if (currentDir.dy !== -1) {
+        newDirection = { dx: 0, dy: 1 };
       }
       break;
     case "a":
-      if (currentDirection.dx !== 1) {
-        nextDirection.dx = -1;
-        nextDirection.dy = 0;
+      if (currentDir.dx !== 1) {
+        newDirection = { dx: -1, dy: 0 };
       }
       break;
     case "d":
-      if (currentDirection.dx !== -1) {
-        nextDirection.dx = 1;
-        nextDirection.dy = 0;
+      if (currentDir.dx !== -1) {
+        newDirection = { dx: 1, dy: 0 };
       }
       break;
     case "p":
@@ -113,6 +118,23 @@ function handleKeyPress(e) {
     case "r":
       resetGame();
       break;
+  }
+
+  // Add the new direction to the queue if it's valid and different from the last queued direction
+  if (newDirection) {
+    // Only add if different from the last direction in the queue
+    const lastDirection =
+      directionQueue.length > 0
+        ? directionQueue[directionQueue.length - 1]
+        : null;
+
+    if (
+      !lastDirection ||
+      newDirection.dx !== lastDirection.dx ||
+      newDirection.dy !== lastDirection.dy
+    ) {
+      directionQueue.push(newDirection);
+    }
   }
 }
 
@@ -138,6 +160,7 @@ function mainLoop() {
   checkGameOver();
   drawSnake();
   drawFood();
+  drawScore();
   generateSpecialFood();
   drawSpecialFood();
 
@@ -147,9 +170,34 @@ function mainLoop() {
 function moveSnake() {
   if (gamePaused) return;
 
-  // Update current direction only when snake actually moves
-  currentDirection.dx = nextDirection.dx;
-  currentDirection.dy = nextDirection.dy;
+  // Get the next direction from the queue if available
+  if (directionQueue.length > 0) {
+    const nextDir = directionQueue.shift();
+
+    // Only apply the direction if it's valid relative to the current direction
+    if (
+      (nextDir.dx === 0 && currentDirection.dx === 0) ||
+      (nextDir.dy === 0 && currentDirection.dy === 0) ||
+      (nextDir.dx !== -currentDirection.dx &&
+        nextDir.dy !== -currentDirection.dy)
+    ) {
+      currentDirection.dx = nextDir.dx;
+      currentDirection.dy = nextDir.dy;
+    }
+
+    // If we still have directions in the queue, ensure the next one is valid
+    if (directionQueue.length > 0) {
+      const nextQueuedDir = directionQueue[0];
+      // Check if the next direction would be valid after applying the current one
+      if (
+        nextQueuedDir.dx === -currentDirection.dx &&
+        nextQueuedDir.dy === -currentDirection.dy
+      ) {
+        // Invalid direction (would cause immediate game over), remove it
+        directionQueue.shift();
+      }
+    }
+  }
 
   const head = {
     x: snake[0].x + currentDirection.dx,
@@ -176,8 +224,6 @@ function moveSnake() {
 
     if (head.x === specialFood.x && head.y === specialFood.y) {
       score += 50;
-      msgElement.textContent = `${score}`;
-      msgElement.style.display = "block";
 
       // Remove it from the canvas if eaten
       specialFood.x = -1;
@@ -188,8 +234,6 @@ function moveSnake() {
   // Normal food management.
   if (head.x === food.x && head.y === food.y) {
     score += 10;
-    msgElement.textContent = `${score}`;
-    msgElement.style.display = "block";
 
     // Only reset special food when normal food is eaten
     if (specialFood.active && specialFood.expiration <= 0) {
@@ -228,6 +272,12 @@ function drawSnake() {
       gridSize - 2,
     );
   });
+}
+
+function drawScore() {
+  if (!gameOver && !gamePaused && score > 0) {
+    setMsg(`Score: ${score}`);
+  }
 }
 
 function drawFood() {
@@ -309,7 +359,6 @@ function generateSpecialFood() {
 
 function resumeGame() {
   gamePaused = false;
-  setMsg(`${score}`);
 }
 
 function pauseGame() {
@@ -323,8 +372,12 @@ function resetGame() {
   currentDirection.dx = validDirections[startDir][0];
   currentDirection.dy = validDirections[startDir][1];
 
-  nextDirection.dx = validDirections[startDir][0];
-  nextDirection.dy = validDirections[startDir][1];
+  // Clear and reset the direction queue
+  directionQueue.length = 0;
+  directionQueue.push({
+    dx: validDirections[startDir][0],
+    dy: validDirections[startDir][1],
+  });
 
   // Clean up the snake.
   while (snake.length > 0) {
