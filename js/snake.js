@@ -20,11 +20,35 @@ directionQueue.push({
   dy: validDirections[startDir][1],
 });
 
-const helpMessage = "[WASD] Move [P] Pause/Resume [R] Restart";
+const helpMessage = "[WASD/HJKL] Move [P] Pause/Resume [R] Restart";
 const gridSize = 20;
 const specialFoodRate = 5;
 const specialFoodExpiration = 50;
 const tileCount = canvas.width / gridSize;
+const validKeys = new Set(
+  ...Array.from([
+    "w",
+    "a",
+    "s",
+    "d",
+    "r",
+    "p",
+    "W",
+    "A",
+    "S",
+    "D",
+    "R",
+    "P",
+    "h",
+    "j",
+    "k",
+    "l",
+    "H",
+    "J",
+    "K",
+    "L",
+  ]),
+);
 
 const messageElement = document.getElementById("message");
 let startx = Math.floor(Math.random() * tileCount);
@@ -43,6 +67,7 @@ let specialFood = {
   active: false,
 };
 
+let vimuser = false;
 let score = 0;
 let gameOver = false;
 let gameStarted = false;
@@ -77,10 +102,7 @@ function handleKeyPress(e) {
     return;
   }
 
-  if (
-    !gameStarted &&
-    ["w", "a", "s", "d", "r", "p", "W", "A", "S", "D", "R", "P"].includes(e.key)
-  ) {
+  if (!gameStarted && validKeys.has(e.key)) {
     gameStarted = true;
   }
 
@@ -93,21 +115,25 @@ function handleKeyPress(e) {
   let newDirection;
   switch (e.key.toLowerCase()) {
     case "w":
+    case "k":
       if (currentDir.dy !== 1) {
         newDirection = { dx: 0, dy: -1 };
       }
       break;
     case "s":
+    case "j":
       if (currentDir.dy !== -1) {
         newDirection = { dx: 0, dy: 1 };
       }
       break;
     case "a":
+    case "h":
       if (currentDir.dx !== 1) {
         newDirection = { dx: -1, dy: 0 };
       }
       break;
     case "d":
+    case "l":
       if (currentDir.dx !== -1) {
         newDirection = { dx: 1, dy: 0 };
       }
