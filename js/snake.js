@@ -443,5 +443,341 @@ function resetGame() {
   generateFood(true);
 }
 
+// Auto Snake Player - Self-contained function that setup and plays snake
+// automatically using pathfinding and obstacle avoidance algorithms
+function initAutoSnakePlayer() {
+  // Wait for the game to be initialized
+  const checkGameLoaded = setInterval(() => {
+    if (
+      typeof snake !== "undefined" &&
+      typeof food !== "undefined" &&
+      typeof canvas !== "undefined"
+    ) {
+      clearInterval(checkGameLoaded);
+      startAutoPlayer();
+    }
+  }, 100);
+
+  function startAutoPlayer() {
+    createControlPanel();
+
+    // Variables to control the auto player
+    let isAutoPlaying = false;
+    let autoPlayInterval = null;
+    const autoPlaySpeed = 50; // ms between moves
+
+    // Game parameters
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    const directions = [
+      { dx: 0, dy: -1 },
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: -1, dy: 0 },
+    ];
+
+    function toggleAutoPlay() {
+      isAutoPlaying = !isAutoPlaying;
+
+      if (isAutoPlaying) {
+        document.getElementById("autoPlayButton").textContent = "Stop AI";
+        autoPlayInterval = setInterval(makeMove, autoPlaySpeed);
+      } else {
+        document.getElementById("autoPlayButton").textContent =
+          "Lazy? Start AI";
+        clearInterval(autoPlayInterval);
+      }
+    }
+
+    // 2D Grid representation of the game
+    function createGrid() {
+      const grid = Array(tileCount)
+        .fill()
+        .map(() => Array(tileCount).fill(0));
+
+      // Mark snake body as obstacles
+      for (let i = 0; i < snake.length; i++) {
+        grid[snake[i].y][snake[i].x] = 1;
+      }
+
+      return grid;
+    }
+
+    // A* pathfinding algorithm
+    function findPath(startX, startY, goalX, goalY) {
+      const grid = createGrid();
+
+      // Priority queue for open nodes
+      const openSet = [];
+      const closedSet = new Set();
+
+      // Start node
+      const start = {
+        x: startX,
+        y: startY,
+        g: 0,
+        h: manhattanDistance(startX, startY, goalX, goalY),
+        f: 0,
+        parent: null,
+      };
+      start.f = start.g + start.h;
+      openSet.push(start);
+
+      while (openSet.length > 0) {
+        // Find node with lowest f score
+        let lowestIndex = 0;
+        for (let i = 0; i < openSet.length; i++) {
+          if (openSet[i].f < openSet[lowestIndex].f) {
+            lowestIndex = i;
+          }
+        }
+
+        const current = openSet[lowestIndex];
+
+        // If we reached the goal
+        if (current.x === goalX && current.y === goalY) {
+          let path = [];
+          let temp = current;
+          while (temp.parent) {
+            path.push({ x: temp.x, y: temp.y });
+            temp = temp.parent;
+          }
+          return path.reverse();
+        }
+
+        // Remove current from openSet and add to closedSet
+        openSet.splice(lowestIndex, 1);
+        closedSet.add(`${current.x},${current.y}`);
+
+        // Check all neighbors
+        for (const dir of directions) {
+          const neighborX = current.x + dir.dx;
+          const neighborY = current.y + dir.dy;
+
+          // Skip if out of bounds
+          if (
+            neighborX < 0 ||
+            neighborX >= tileCount ||
+            neighborY < 0 ||
+            neighborY >= tileCount
+          ) {
+            continue;
+          }
+
+          // Skip if in closedSet
+          if (closedSet.has(`${neighborX},${neighborY}`)) {
+            continue;
+          }
+
+          // Skip if obstacle (snake body)
+          if (grid[neighborY][neighborX] === 1) {
+            continue;
+          }
+
+          const g = current.g + 1;
+          const h = manhattanDistance(neighborX, neighborY, goalX, goalY);
+          const f = g + h;
+
+          // Check if this is a better path
+          let isBetter = true;
+          for (const node of openSet) {
+            if (node.x === neighborX && node.y === neighborY && node.f <= f) {
+              isBetter = false;
+              break;
+            }
+          }
+
+          if (isBetter) {
+            openSet.push({
+              x: neighborX,
+              y: neighborY,
+              g: g,
+              h: h,
+              f: f,
+              parent: current,
+            });
+          }
+        }
+      }
+
+      // No path found
+      return [];
+    }
+
+    // Manhattan distance heuristic
+    function manhattanDistance(x1, y1, x2, y2) {
+      return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+    }
+
+    // Find safest direction if no path to food
+    function findSafeDirection() {
+      const head = snake[0];
+      const safestDir = { dir: null, space: -1 };
+
+      // Try each direction and see which has the most open space
+      for (const dir of directions) {
+        const newX = head.x + dir.dx;
+        const newY = head.y + dir.dy;
+
+        // Skip if it would hit the snake
+        let willHitSnake = false;
+        for (let i = 0; i < snake.length; i++) {
+          if (snake[i].x === newX && snake[i].y === newY) {
+            willHitSnake = true;
+            break;
+          }
+        }
+
+        // Skip if out of bounds
+        if (
+          newX < 0 ||
+          newX >= tileCount ||
+          newY < 0 ||
+          newY >= tileCount ||
+          willHitSnake
+        ) {
+          continue;
+        }
+
+        // Flood fill to count available space
+        const grid = createGrid();
+        const spaceCount = floodFill(grid, newX, newY);
+
+        if (spaceCount > safestDir.space) {
+          safestDir.dir = dir;
+          safestDir.space = spaceCount;
+        }
+      }
+
+      return safestDir.dir;
+    }
+
+    // Flood fill algorithm to count open spaces
+    function floodFill(grid, x, y) {
+      if (
+        x < 0 ||
+        x >= tileCount ||
+        y < 0 ||
+        y >= tileCount ||
+        grid[y][x] === 1
+      ) {
+        return 0;
+      }
+
+      grid[y][x] = 1; // Mark as visited
+      let count = 1;
+
+      // Check adjacent cells
+      count += floodFill(grid, x + 1, y);
+      count += floodFill(grid, x - 1, y);
+      count += floodFill(grid, x, y + 1);
+      count += floodFill(grid, x, y - 1);
+
+      return count;
+    }
+
+    // Set movement direction
+    function setDirection(dx, dy) {
+      // Find matching direction
+      for (let i = 0; i < directionQueue.length; i++) {
+        if (directionQueue[i].dx === dx && directionQueue[i].dy === dy) {
+          return; // Direction already queued
+        }
+      }
+
+      // Add new direction to queue
+      directionQueue.push({ dx, dy });
+    }
+
+    // Make a move decision
+    function makeMove() {
+      if (gameOver || !isAutoPlaying) {
+        return;
+      }
+
+      const head = snake[0];
+      let pathToTarget;
+
+      // Check if special food is active and prioritize it
+      if (
+        specialFood &&
+        specialFood.active &&
+        specialFood.x >= 0 &&
+        specialFood.y >= 0 &&
+        specialFood.expiration > 0
+      ) {
+        // Path to special food
+        pathToTarget = findPath(head.x, head.y, specialFood.x, specialFood.y);
+
+        // If we can't reach special food in time or no path exists, check regular food
+        if (
+          pathToTarget.length === 0 ||
+          pathToTarget.length > specialFood.expiration
+        ) {
+          // Fall back to regular food
+          pathToTarget = findPath(head.x, head.y, food.x, food.y);
+        }
+      } else {
+        // No special food, go for regular food
+        pathToTarget = findPath(head.x, head.y, food.x, food.y);
+      }
+
+      if (pathToTarget.length > 0) {
+        // Move toward target food
+        const nextMove = pathToTarget[0];
+        const dx = nextMove.x - head.x;
+        const dy = nextMove.y - head.y;
+        setDirection(dx, dy);
+      } else {
+        // No path to any food, find safest direction
+        const safeDir = findSafeDirection();
+        if (safeDir) {
+          setDirection(safeDir.dx, safeDir.dy);
+        }
+      }
+    }
+
+    // Create control panel
+    function createControlPanel() {
+      const controlPanel = document.createElement("div");
+      controlPanel.style.marginTop = "10px";
+      controlPanel.style.textAlign = "center";
+
+      const autoPlayButton = document.createElement("button");
+      autoPlayButton.id = "autoPlayButton";
+      autoPlayButton.textContent = "Lazy? Start AI";
+      autoPlayButton.style.padding = "8px 16px";
+      autoPlayButton.style.backgroundColor = "var(--color-primary)";
+      autoPlayButton.style.color = "black";
+      autoPlayButton.style.border = "none";
+      autoPlayButton.style.borderRadius = "4px";
+      autoPlayButton.style.cursor = "pointer";
+      autoPlayButton.style.fontSize = "14px";
+      autoPlayButton.style.fontFamily = "Roboto Mono, monospace";
+      autoPlayButton.style.marginBottom = "10px";
+
+      autoPlayButton.title = "AI uses A* pathfinding";
+
+      autoPlayButton.addEventListener("click", toggleAutoPlay);
+
+      controlPanel.appendChild(autoPlayButton);
+
+      const snakeContainer = document.getElementById("snake");
+      if (snakeContainer) {
+        snakeContainer.appendChild(controlPanel);
+      }
+    }
+  }
+}
+
+// AI Initializer function
+(function () {
+  // Check if we're on a page with the snake game
+  if (document.getElementById("snake") || document.getElementById("canvas")) {
+    document.addEventListener("DOMContentLoaded", initAutoSnakePlayer);
+  }
+})();
+
 resetGame();
 mainLoop();
