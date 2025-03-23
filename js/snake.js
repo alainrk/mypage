@@ -459,7 +459,7 @@ function initAutoSnakePlayer() {
   }, 100);
 
   function startAutoPlayer() {
-    createControlPanel();
+    setupControlPanel();
 
     // Variables to control the auto player
     let isAutoPlaying = false;
@@ -739,34 +739,11 @@ function initAutoSnakePlayer() {
     }
 
     // Create control panel
-    function createControlPanel() {
-      const controlPanel = document.createElement("div");
-      controlPanel.style.marginTop = "10px";
-      controlPanel.style.textAlign = "center";
-
-      const autoPlayButton = document.createElement("button");
-      autoPlayButton.id = "autoPlayButton";
+    function setupControlPanel() {
+      const autoPlayButton = document.getElementById("autoPlayButton");
       autoPlayButton.textContent = "Lazy? Start AI";
-      autoPlayButton.style.padding = "8px 16px";
-      autoPlayButton.style.backgroundColor = "var(--color-primary)";
-      autoPlayButton.style.color = "black";
-      autoPlayButton.style.border = "none";
-      autoPlayButton.style.borderRadius = "4px";
-      autoPlayButton.style.cursor = "pointer";
-      autoPlayButton.style.fontSize = "14px";
-      autoPlayButton.style.fontFamily = "Roboto Mono, monospace";
-      autoPlayButton.style.marginBottom = "10px";
-
-      autoPlayButton.title = "AI uses A* pathfinding";
-
       autoPlayButton.addEventListener("click", toggleAutoPlay);
-
-      controlPanel.appendChild(autoPlayButton);
-
-      const snakeContainer = document.getElementById("snake");
-      if (snakeContainer) {
-        snakeContainer.appendChild(controlPanel);
-      }
+      autoPlayButton.disabled = false;
     }
   }
 }

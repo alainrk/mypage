@@ -243,6 +243,22 @@ canvas {
   justify-content: center;
 }
 
+#controlPanel {
+  margin-top: 10px;
+  text-align: center;
+}
+
+#autoPlayButton {
+  padding: 8px 16px;
+  background-color: var(--color-primary);
+  color: black;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Roboto Mono", monospace;
+}
+
 @media (max-width: 800px) {
   #snake {
     display: none;
