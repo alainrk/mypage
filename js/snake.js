@@ -377,7 +377,7 @@ function generateSpecialFood() {
 
   // Make sure food doesn't spawn on snake
   snake.forEach((segment) => {
-    if (food.x === segment.x && food.y === segment.y) {
+    if (specialFood.x === segment.x && specialFood.y === segment.y) {
       generateSpecialFood();
     }
   });
