@@ -1,19 +1,6 @@
-class Game {
-  constructor() {
-    this.ctx = document.getElementById("canvas").getContext("2d");
-
-    this.entities = [
-      Message(
-        this,
-        document.getElementsById("message"),
-        "[WASD/HJKL] Move [P] Pause/Resume [R] Restart",
-      ),
-    ];
-
-    this.gridSize = 20;
-    this.specialFoodRate = 5;
-    this.specialFoodExpiration = 50;
-    this.tileCount = canvas.width / gridSize;
+class InputManager {
+  constructor(game) {
+    this.game = game;
     this.validKeys = new Set(
       ...Array.from([
         "w",
@@ -39,27 +26,54 @@ class Game {
       ]),
     );
 
-    let food = { x: 15, y: 15, ate: 0 };
-    let specialFood = {
-      x: -1,
-      y: -1,
-      expiration: specialFoodExpiration,
-      active: false,
-    };
+    this.setupEventListeners();
+  }
 
-    this.vimuser = false;
+  setupEventListeners() {
+    document.addEventListener("keydown", (e) => {
+      if (!this.validKeys.has(e.key)) return;
+      game.enqueuePressedKey(e.key);
+    });
+  }
+}
+
+class Game {
+  constructor() {
+    this.input = new InputManager();
+    this.ctx = document.getElementById("canvas").getContext("2d");
+
+    this.keysQueue = [];
+    this.entities = [
+      new Message(
+        this,
+        document.getElementsById("message"),
+        "[WASD/HJKL] Move [P] Pause/Resume [R] Restart",
+      ),
+      new Snake(this),
+      new Food(this),
+      new SpecialFood(this, 5, 50),
+    ];
+
+    this.tileCount = canvas.width / gridSize;
+    this.gridSize = 20;
+
     this.score = 0;
     this.isOver = false;
     this.started = false;
     this.isPaused = false;
     this.speed = 100;
-    this.lastTime = 0; // TODO: use deltatime
+    this.lastTime = 0;
+  }
+
+  enqueuePressedKey(key) {
+    this.keysQueue.push(key);
   }
 
   gameLoop(currentTime) {
     const deltaTime = (currentTime - this.lastTime) / 1000;
 
-    if (deltaTime > gameSpeed) {
+    // TODO: Check if this is correct, or we can update in the meantime
+    if (deltaTime < gameSpeed) {
       return;
     }
 
@@ -144,7 +158,7 @@ class Snake extends Entity {
       dy: validDirections[startDir][1],
     };
 
-    const directionQueue = [];
+    this.directionQueue = [];
     directionQueue.push({
       dx: validDirections[startDir][0],
       dy: validDirections[startDir][1],
@@ -159,6 +173,9 @@ class Snake extends Entity {
 class Food extends Entity {
   constructor(game) {
     super(game);
+    this.x = -1;
+    this.y = -1;
+    this.eaten = false;
   }
 
   update(deltaTime) {}
@@ -167,8 +184,13 @@ class Food extends Entity {
 }
 
 class SpecialFood extends Entity {
-  constructor(game) {
+  constructor(game, rate, expiration) {
     super(game);
+    this.x = -1;
+    this.y = -1;
+    this.rate = rate;
+    this.expiration = expiration;
+    this.active = false;
   }
 
   update(deltaTime) {}
