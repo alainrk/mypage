@@ -156,4 +156,22 @@ class Snake extends Entity {
   render() {}
 }
 
-class Food extends Entity {}
+class Food extends Entity {
+  constructor(game) {
+    super(game);
+  }
+
+  update(deltaTime) {}
+
+  render() {}
+}
+
+class SpecialFood extends Entity {
+  constructor(game) {
+    super(game);
+  }
+
+  update(deltaTime) {}
+
+  render() {}
+}
