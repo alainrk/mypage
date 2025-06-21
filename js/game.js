@@ -31,8 +31,8 @@ class InputManager {
 
   setupEventListeners() {
     document.addEventListener("keydown", (e) => {
-      if (!this.validKeys.has(e.key)) return;
-      game.enqueuePressedKey(e.key);
+      if (!this.validKeys.has(key)) return;
+      game.enqueuePressedKey(key);
     });
   }
 }
@@ -66,7 +66,7 @@ class Game {
   }
 
   enqueuePressedKey(key) {
-    this.keysQueue.push(key);
+    this.keysQueue.unshift(key);
   }
 
   gameLoop(currentTime) {
@@ -85,7 +85,98 @@ class Game {
     requestAnimationFrame(this.gameLoop.bind(this));
   }
 
-  update(deltaTime) {}
+  resetGame() {
+    throw new Error("Not implemented.");
+  }
+
+  update(_deltaTime) {
+    while (this.keysQueue.length) {
+      const key = this.keysQueue.pop();
+
+      if (this.isOver) {
+        // Only restart is allowed is the game is over.
+        if (!["r", "R"].includes(key)) {
+          continue;
+        }
+
+        this.resetGame();
+        continue;
+      }
+
+      if (this.isPaused) {
+        if (["r", "R"].includes(key)) {
+          resetGame();
+        }
+        if (["p", "P"].includes(key)) {
+          resumeGame();
+        }
+        // Only unpause and restart are allowed if the game is over;
+        continue;
+      }
+
+      if (!this.started && this.input.validKeys.has(key)) {
+        this.started = true;
+        continue;
+      }
+
+      // Get the current direction (either from the snake's movement or from the first queued direction)
+      const currentDir =
+        directionQueue.length > 0
+          ? directionQueue[directionQueue.length - 1]
+          : currentDirection;
+
+      let newDirection;
+      switch (key.toLowerCase()) {
+        case "w":
+        case "k":
+          if (currentDir.dy !== 1) {
+            newDirection = { dx: 0, dy: -1 };
+          }
+          break;
+        case "s":
+        case "j":
+          if (currentDir.dy !== -1) {
+            newDirection = { dx: 0, dy: 1 };
+          }
+          break;
+        case "a":
+        case "h":
+          if (currentDir.dx !== 1) {
+            newDirection = { dx: -1, dy: 0 };
+          }
+          break;
+        case "d":
+        case "l":
+          if (currentDir.dx !== -1) {
+            newDirection = { dx: 1, dy: 0 };
+          }
+          break;
+        case "p":
+          pauseGame();
+          break;
+        case "r":
+          resetGame();
+          break;
+      }
+
+      // Add the new direction to the queue if it's valid and different from the last queued direction
+      if (newDirection) {
+        // Only add if different from the last direction in the queue
+        const lastDirection =
+          directionQueue.length > 0
+            ? directionQueue[directionQueue.length - 1]
+            : null;
+
+        if (
+          !lastDirection ||
+          newDirection.dx !== lastDirection.dx ||
+          newDirection.dy !== lastDirection.dy
+        ) {
+          directionQueue.push(newDirection);
+        }
+      }
+    }
+  }
   render() {}
   start() {}
   stop() {}
