@@ -103,7 +103,17 @@ class Game {
 
   stop() {}
 
+  checkGameOver() {
+    return this.snake.isSelfTouching();
+  }
+
   update(_deltaTime) {
+    if (this.checkGameOver()) {
+      this.isOver = true;
+      this.isPaused = true;
+      this.message.set(`Game Over! Score: ${score}. Press R to restart.`);
+    }
+
     while (this.keysQueue.length) {
       const key = this.keysQueue.pop().toLowerCase();
 
@@ -252,6 +262,16 @@ class Snake extends Entity {
     this.reset();
   }
 
+  isSelfTouching() {
+    const head = this.segments[0];
+    for (let i = 1; i < this.segments.length; i++) {
+      if (head.x === this.segments[i].x && head.y === this.segments[i].y) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   reset() {
     const startx = Math.floor(Math.random() * this.game.tileCount);
     const starty = Math.floor(Math.random() * this.game.tileCount);
@@ -288,7 +308,19 @@ class Snake extends Entity {
 
   update(deltaTime) {}
 
-  render() {}
+  render() {
+    this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-primary")
+      .trim();
+    this.segments.forEach((segment) => {
+      this.game.ctx.fillRect(
+        segment.x * this.game.gridSize,
+        segment.y * this.game.gridSize,
+        this.game.gridSize - 2,
+        this.game.gridSize - 2,
+      );
+    });
+  }
 }
 
 class Food extends Entity {
@@ -301,7 +333,17 @@ class Food extends Entity {
 
   update(deltaTime) {}
 
-  render() {}
+  render() {
+    this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-secondary")
+      .trim();
+    this.game.ctx.fillRect(
+      this.x * this.game.gridSize,
+      this.y * this.game.gridSize,
+      this.game.gridSize - 2,
+      this.game.gridSize - 2,
+    );
+  }
 }
 
 class SpecialFood extends Entity {
@@ -314,7 +356,21 @@ class SpecialFood extends Entity {
     this.active = false;
   }
 
-  update(deltaTime) {}
+  update(_deltaTime) {
+    if (this.expiration <= 0 || this.x < 0 || this.y < 0) {
+      this.active = false;
+    }
+  }
 
-  render() {}
+  render() {
+    if (!this.active) return;
+
+    this.game.ctx.fillStyle = "red";
+    this.game.ctx.fillRect(
+      this.x * this.game.gridSize,
+      this.y * this.game.gridSize,
+      this.game.gridSize - 2,
+      this.game.gridSize - 2,
+    );
+  }
 }
