@@ -1,3 +1,5 @@
+const helpMessage = "[WASD/HJKL] Move [P] Pause/Resume [R] Restart";
+
 class InputManager {
   constructor(game) {
     this.game = game;
@@ -42,29 +44,8 @@ class Game {
     this.input = new InputManager();
     this.canvas = document.getElementById("canvas");
     this.ctx = this.canvas.getContext("2d");
-
-    this.keysQueue = [];
-
-    this.message = new Message(
-      this,
-      document.getElementsById("message"),
-      "[WASD/HJKL] Move [P] Pause/Resume [R] Restart",
-    );
-    this.snake = new Snake(this);
-    this.food = new Food(this);
-    this.specialFood = new SpecialFood(this, 5, 20);
-
-    this.entities = [this.message, this.snake, this.food, this.specialFood];
-
     this.gridSize = 20;
     this.tileCount = this.canvas.width / this.gridSize;
-
-    this.score = 0;
-    this.isOver = false;
-    this.started = false;
-    this.isPaused = false;
-    this.speed = 100;
-    this.lastTime = 0;
   }
 
   enqueuePressedKey(key) {
@@ -88,15 +69,33 @@ class Game {
   }
 
   reset() {
-    throw new Error("Not implemented.");
+    this.keysQueue = [];
+
+    this.message = new Message(
+      this,
+      document.getElementsById("message"),
+      helpMessage,
+    );
+    this.snake = new Snake(this);
+    this.food = new Food(this);
+    this.specialFood = new SpecialFood(this, 5, 20);
+
+    this.entities = [this.message, this.snake, this.food, this.specialFood];
+
+    this.score = 0;
+    this.isOver = false;
+    this.started = false;
+    this.isPaused = false;
+    this.speed = 100;
+    this.lastTime = 0;
   }
 
   pause() {
-    throw new Error("Not implemented.");
+    this.isPaused = true;
   }
 
   resume() {
-    throw new Error("Not implemented.");
+    this.isPaused = false;
   }
 
   start() {}
@@ -259,7 +258,43 @@ class Snake extends Entity {
     this.currentDirection = {};
     this.directionQueue = [];
 
-    this.reset();
+    const startDir = Math.floor(Math.random() * this.validDirections.length);
+
+    this.currentDirection.dx = this.validDirections[startDir][0];
+    this.currentDirection.dy = this.validDirections[startDir][1];
+
+    // Clear and reset the direction queue
+    this.directionQueue.length = 0;
+    this.directionQueue.push({
+      dx: this.validDirections[startDir][0],
+      dy: this.validDirections[startDir][1],
+    });
+
+    // Clean up the snake.
+    while (this.segments.length > 0) {
+      this.segments.pop();
+    }
+
+    // Get the head randomly, but I want to avoid wrapping at the first iteration.
+    let x = Math.min(
+      this.game.tileCount - 4,
+      Math.max(4, Math.floor(Math.random() * this.game.tileCount)),
+    );
+    let y = Math.min(
+      this.game.tileCount - 4,
+      Math.max(4, Math.floor(Math.random() * this.game.tileCount)),
+    );
+
+    // Compose the snake.
+    // Push the head.
+    this.segments.push({ x: x, y: y });
+    for (let i = 3; i > 0; i--) {
+      // Push the rest of the snake according to direction.
+      this.segments.push({
+        x: x + i * this.currentDirection.dx,
+        y: y + i * this.currentDirection.dy,
+      });
+    }
   }
 
   isSelfTouching() {
@@ -270,27 +305,6 @@ class Snake extends Entity {
       }
     }
     return false;
-  }
-
-  reset() {
-    const startx = Math.floor(Math.random() * this.game.tileCount);
-    const starty = Math.floor(Math.random() * this.game.tileCount);
-
-    const startDir = Math.floor(Math.random() * validDirections.length);
-
-    this.segments = [
-      { x: startx, y: starty },
-      { x: startx, y: starty + 1 },
-      { x: startx, y: starty + 2 },
-      { x: startx, y: starty + 3 },
-    ];
-
-    this.directionQueue = [
-      {
-        dx: this.validDirections[startDir][0],
-        dy: this.validDirections[startDir][1],
-      },
-    ];
   }
 
   up() {
@@ -306,7 +320,83 @@ class Snake extends Entity {
     this.directionQueue.push({ dx: -1, dy: 0 });
   }
 
-  update(deltaTime) {}
+  update(_deltaTime) {
+    if (this.game.isPaused) return;
+
+    // Get the next direction from the queue if available
+    if (this.directionQueue.length > 0) {
+      const nextDir = this.directionQueue.shift();
+
+      // Only apply the direction if it's valid relative to the current direction
+      if (
+        (nextDir.dx === 0 && currentDirection.dx === 0) ||
+        (nextDir.dy === 0 && currentDirection.dy === 0) ||
+        (nextDir.dx !== -currentDirection.dx &&
+          nextDir.dy !== -currentDirection.dy)
+      ) {
+        currentDirection.dx = nextDir.dx;
+        currentDirection.dy = nextDir.dy;
+      }
+
+      // If we still have directions in the queue, ensure the next one is valid
+      if (directionQueue.length > 0) {
+        const nextQueuedDir = directionQueue[0];
+        // Check if the next direction would be valid after applying the current one
+        if (
+          nextQueuedDir.dx === -currentDirection.dx &&
+          nextQueuedDir.dy === -currentDirection.dy
+        ) {
+          // Invalid direction (would cause immediate game over), remove it
+          directionQueue.shift();
+        }
+      }
+    }
+
+    const head = {
+      x: snake[0].x + currentDirection.dx,
+      y: snake[0].y + currentDirection.dy,
+    };
+
+    // Wrap around edges
+    if (head.x >= tileCount) head.x = 0;
+    if (head.x < 0) head.x = tileCount - 1;
+    if (head.y >= tileCount) head.y = 0;
+    if (head.y < 0) head.y = tileCount - 1;
+
+    snake.unshift(head);
+
+    // Special food management.
+    if (specialFood.active && specialFood.expiration > 0) {
+      specialFood.expiration--;
+
+      // Remove it from the canvas if expired
+      if (specialFood.expiration <= 0) {
+        specialFood.x = -1;
+        specialFood.y = -1;
+      }
+
+      if (head.x === specialFood.x && head.y === specialFood.y) {
+        score += 50;
+
+        // Remove it from the canvas if eaten
+        specialFood.x = -1;
+        specialFood.y = -1;
+      }
+    }
+
+    // Normal food management.
+    if (head.x === food.x && head.y === food.y) {
+      score += 10;
+
+      // Only reset special food when normal food is eaten
+      if (specialFood.active && specialFood.expiration <= 0) {
+        specialFood.active = false;
+      }
+      generateFood();
+    } else {
+      snake.pop();
+    }
+  }
 
   render() {
     this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
@@ -328,7 +418,24 @@ class Food extends Entity {
     super(game);
     this.x = -1;
     this.y = -1;
-    this.eaten = false;
+    this.eaten = 0;
+  }
+
+  generate() {
+    const x = Math.floor(Math.random() * this.game.tileCount);
+    const y = Math.floor(Math.random() * this.game.tileCount);
+
+    // TODO: Improve, using proper collision detection
+    // Make sure food doesn't spawn on snake
+    this.game.snake.forEach((segment) => {
+      if (x === segment.x && y === segment.y) {
+        generate();
+      }
+    });
+
+    this.x = x;
+    this.y = y;
+    this.eaten++;
   }
 
   update(deltaTime) {}
