@@ -438,7 +438,9 @@ class Food extends Entity {
     this.eaten++;
   }
 
-  update(deltaTime) {}
+  update(deltaTime) {
+    this.generate();
+  }
 
   render() {
     this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
@@ -463,10 +465,44 @@ class SpecialFood extends Entity {
     this.active = false;
   }
 
+  // TODO: Improve, using proper collision detection
+  generate() {
+    if (
+      // Special food already created.
+      this.active ||
+      // Wait at least the minimum rate to generate the first special food.
+      this.game.food.eaten < this.rate ||
+      // Wait the rate-th occurrence of normal food.
+      this.game.food.eaten % this.rate !== 0
+    )
+      return;
+
+    const x = Math.floor(Math.random() * tileCount);
+    const y = Math.floor(Math.random() * tileCount);
+
+    // Make sure food doesn't spawn on normal food
+    if (x === this.game.food.x && y === this.game.food.y) {
+      this.generate();
+    }
+
+    // Make sure food doesn't spawn on snake
+    this.game.snake.forEach((segment) => {
+      if (x === segment.x && y === segment.y) {
+        this.generate();
+      }
+    });
+
+    this.expiration = 50;
+    this.active = true;
+  }
+
   update(_deltaTime) {
     if (this.expiration <= 0 || this.x < 0 || this.y < 0) {
       this.active = false;
+      return;
     }
+
+    this.generate();
   }
 
   render() {
