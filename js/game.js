@@ -40,23 +40,24 @@ class InputManager {
 class Game {
   constructor() {
     this.input = new InputManager();
-    this.ctx = document.getElementById("canvas").getContext("2d");
+    this.canvas = document.getElementById("canvas");
+    this.ctx = this.canvas.getContext("2d");
 
     this.keysQueue = [];
-    this.snake = new Snake(this);
-    this.entities = [
-      new Message(
-        this,
-        document.getElementsById("message"),
-        "[WASD/HJKL] Move [P] Pause/Resume [R] Restart",
-      ),
-      snake,
-      new Food(this),
-      new SpecialFood(this, 5, 50),
-    ];
 
-    this.tileCount = canvas.width / gridSize;
+    this.message = new Message(
+      this,
+      document.getElementsById("message"),
+      "[WASD/HJKL] Move [P] Pause/Resume [R] Restart",
+    );
+    this.snake = new Snake(this);
+    this.food = new Food(this);
+    this.specialFood = new SpecialFood(this, 5, 20);
+
+    this.entities = [this.message, this.snake, this.food, this.specialFood];
+
     this.gridSize = 20;
+    this.tileCount = this.canvas.width / this.gridSize;
 
     this.score = 0;
     this.isOver = false;
@@ -89,13 +90,17 @@ class Game {
   reset() {
     throw new Error("Not implemented.");
   }
+
   pause() {
     throw new Error("Not implemented.");
   }
+
   resume() {
     throw new Error("Not implemented.");
   }
+
   start() {}
+
   stop() {}
 
   update(_deltaTime) {
@@ -158,9 +163,23 @@ class Game {
 
       continue;
     }
+
+    for (const entity of this.entities) {
+      entity.update();
+    }
   }
 
-  render() {}
+  render() {
+    this.ctx.fillStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-background")
+      .trim();
+
+    this.ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (const entity of this.entities) {
+      entity.render();
+    }
+  }
 }
 
 class Entity {
@@ -183,17 +202,17 @@ class Message extends Entity {
 
   update(_deltaTime) {
     if (this.game.isPaused) {
-      this.text = this.defaultText;
+      this.set(this.defaultText);
     } else if (this.game.isOver) {
-      this.text = `Game Over! Score: ${this.game.score}. Press R to restart.`;
+      this.set(`Game Over! Score: ${this.game.score}. Press R to restart.`);
     } else if (
       !this.game.isOver &&
       !this.game.isPaused &&
       this.game.score > 0
     ) {
-      this.text = `Score: ${this.game.score}`;
+      this.set(`Score: ${this.game.score}`);
     } else {
-      this.text = this.defaultText;
+      this.set(this.defaultText);
     }
   }
 
