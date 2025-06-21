@@ -95,6 +95,8 @@ class Game {
   resume() {
     throw new Error("Not implemented.");
   }
+  start() {}
+  stop() {}
 
   update(_deltaTime) {
     while (this.keysQueue.length) {
@@ -157,9 +159,8 @@ class Game {
       continue;
     }
   }
+
   render() {}
-  start() {}
-  stop() {}
 }
 
 class Entity {
@@ -177,6 +178,7 @@ class Message extends Entity {
     this.element = element;
     this.defaultText = text;
     this.text = text;
+    this.display = "none";
   }
 
   update(_deltaTime) {
@@ -195,9 +197,21 @@ class Message extends Entity {
     }
   }
 
+  set(text) {
+    this.text = text;
+  }
+
+  hide() {
+    this.display = "none";
+  }
+
+  show() {
+    this.display = "block";
+  }
+
   render() {
     this.element.textContent = this.text;
-    this.element.style.display = "block";
+    this.element.style.display = this.display;
   }
 }
 
@@ -205,15 +219,23 @@ class Snake extends Entity {
   constructor(game) {
     super(game);
 
-    const startx = Math.floor(Math.random() * tileCount);
-    const starty = Math.floor(Math.random() * tileCount);
-
     this.validDirections = [
       [0, -1],
       [0, 1],
       [-1, 0],
       [1, 0],
     ];
+
+    this.segments = [];
+    this.currentDirection = {};
+    this.directionQueue = [];
+
+    this.reset();
+  }
+
+  reset() {
+    const startx = Math.floor(Math.random() * this.game.tileCount);
+    const starty = Math.floor(Math.random() * this.game.tileCount);
 
     const startDir = Math.floor(Math.random() * validDirections.length);
 
@@ -224,75 +246,28 @@ class Snake extends Entity {
       { x: startx, y: starty + 3 },
     ];
 
-    this.currentDirection = {
-      dx: validDirections[startDir][0],
-      dy: validDirections[startDir][1],
-    };
-
-    this.directionQueue = [];
-    directionQueue.push({
-      dx: validDirections[startDir][0],
-      dy: validDirections[startDir][1],
-    });
+    this.directionQueue = [
+      {
+        dx: this.validDirections[startDir][0],
+        dy: this.validDirections[startDir][1],
+      },
+    ];
   }
 
-  up() {}
-  down() {}
-  right() {}
-  left() {}
-
-  update(deltaTime) {
-    // // Get the current direction (either from the snake's movement or from the first queued direction)
-    // const currentDir =
-    //   directionQueue.length > 0
-    //     ? directionQueue[directionQueue.length - 1]
-    //     : currentDirection;
-    //
-    // let newDirection;
-    // switch (key.toLowerCase()) {
-    //   case "w":
-    //   case "k":
-    //     if (currentDir.dy !== 1) {
-    //       newDirection = { dx: 0, dy: -1 };
-    //     }
-    //     break;
-    //   case "s":
-    //   case "j":
-    //     if (currentDir.dy !== -1) {
-    //       newDirection = { dx: 0, dy: 1 };
-    //     }
-    //     break;
-    //   case "a":
-    //   case "h":
-    //     if (currentDir.dx !== 1) {
-    //       newDirection = { dx: -1, dy: 0 };
-    //     }
-    //     break;
-    //   case "d":
-    //   case "l":
-    //     if (currentDir.dx !== -1) {
-    //       newDirection = { dx: 1, dy: 0 };
-    //     }
-    //     break;
-    // }
-    //
-    // // Add the new direction to the queue if it's valid and different from the last queued direction
-    // if (newDirection) {
-    //   // Only add if different from the last direction in the queue
-    //   const lastDirection =
-    //     directionQueue.length > 0
-    //       ? directionQueue[directionQueue.length - 1]
-    //       : null;
-    //
-    //   if (
-    //     !lastDirection ||
-    //     newDirection.dx !== lastDirection.dx ||
-    //     newDirection.dy !== lastDirection.dy
-    //   ) {
-    //     directionQueue.push(newDirection);
-    //   }
-    // }
+  up() {
+    this.directionQueue.push({ dx: 0, dy: -1 });
   }
+  down() {
+    this.directionQueue.push({ dx: 0, dy: 1 });
+  }
+  right() {
+    this.directionQueue.push({ dx: 1, dy: 0 });
+  }
+  left() {
+    this.directionQueue.push({ dx: -1, dy: 0 });
+  }
+
+  update(deltaTime) {}
 
   render() {}
 }
