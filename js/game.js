@@ -60,9 +60,9 @@ class Game {
     console.log(deltaTime, this.speed);
 
     // TODO: Check if this is correct, or we can update in the meantime
-    if (deltaTime < this.speed) {
-      return;
-    }
+    // if (deltaTime < this.speed) {
+    //   return;
+    // }
 
     this.lastTime = currentTime;
 
@@ -437,6 +437,8 @@ class Food extends Entity {
     this.y = -1;
     this.eaten = 0;
     this.active = false;
+
+    this.generate();
   }
 
   generate() {
@@ -447,24 +449,21 @@ class Food extends Entity {
     // Make sure food doesn't spawn on snake
     this.game.snake.segments.forEach((segment) => {
       if (x === segment.x && y === segment.y) {
-        generate();
+        this.generate();
       }
     });
 
     this.x = x;
     this.y = y;
-    this.eaten++;
   }
 
   eat() {
+    this.eaten++;
     this.active = false;
+    this.generate();
   }
 
-  update(_deltaTime) {
-    if (!this.active) {
-      this.generate();
-    }
-  }
+  update(_deltaTime) {}
 
   render() {
     this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
