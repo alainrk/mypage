@@ -321,6 +321,7 @@ class Snake extends Entity {
   }
 
   update(_deltaTime) {
+    // TODO: Check if needed, should be the game to avoid it
     if (this.game.isPaused) return;
 
     // Get the next direction from the queue if available
@@ -329,72 +330,78 @@ class Snake extends Entity {
 
       // Only apply the direction if it's valid relative to the current direction
       if (
-        (nextDir.dx === 0 && currentDirection.dx === 0) ||
-        (nextDir.dy === 0 && currentDirection.dy === 0) ||
-        (nextDir.dx !== -currentDirection.dx &&
-          nextDir.dy !== -currentDirection.dy)
+        (nextDir.dx === 0 && this.currentDirection.dx === 0) ||
+        (nextDir.dy === 0 && this.currentDirection.dy === 0) ||
+        (nextDir.dx !== -this.currentDirection.dx &&
+          nextDir.dy !== -this.currentDirection.dy)
       ) {
-        currentDirection.dx = nextDir.dx;
-        currentDirection.dy = nextDir.dy;
+        this.currentDirection.dx = nextDir.dx;
+        this.currentDirection.dy = nextDir.dy;
       }
 
       // If we still have directions in the queue, ensure the next one is valid
-      if (directionQueue.length > 0) {
-        const nextQueuedDir = directionQueue[0];
+      if (this.directionQueue.length > 0) {
+        const nextQueuedDir = this.directionQueue[0];
         // Check if the next direction would be valid after applying the current one
         if (
-          nextQueuedDir.dx === -currentDirection.dx &&
-          nextQueuedDir.dy === -currentDirection.dy
+          nextQueuedDir.dx === -this.currentDirection.dx &&
+          nextQueuedDir.dy === -this.currentDirection.dy
         ) {
           // Invalid direction (would cause immediate game over), remove it
-          directionQueue.shift();
+          this.directionQueue.shift();
         }
       }
     }
 
     const head = {
-      x: snake[0].x + currentDirection.dx,
-      y: snake[0].y + currentDirection.dy,
+      x: this.segments[0].x + this.currentDirection.dx,
+      y: this.segments[0].y + this.currentDirection.dy,
     };
 
     // Wrap around edges
-    if (head.x >= tileCount) head.x = 0;
-    if (head.x < 0) head.x = tileCount - 1;
-    if (head.y >= tileCount) head.y = 0;
-    if (head.y < 0) head.y = tileCount - 1;
+    if (head.x >= this.game.tileCount) head.x = 0;
+    if (head.x < 0) head.x = this.game.tileCount - 1;
+    if (head.y >= this.game.tileCount) head.y = 0;
+    if (head.y < 0) head.y = this.game.tileCount - 1;
 
-    snake.unshift(head);
+    this.segments.unshift(head);
 
     // Special food management.
-    if (specialFood.active && specialFood.expiration > 0) {
-      specialFood.expiration--;
+    if (this.game.specialFood.active && this.game.specialFood.expiration > 0) {
+      this.game.specialFood.expiration--;
 
       // Remove it from the canvas if expired
-      if (specialFood.expiration <= 0) {
-        specialFood.x = -1;
-        specialFood.y = -1;
+      if (this.game.specialFood.expiration <= 0) {
+        this.game.specialFood.x = -1;
+        this.game.specialFood.y = -1;
       }
 
-      if (head.x === specialFood.x && head.y === specialFood.y) {
+      if (
+        head.x === this.game.specialFood.x &&
+        head.y === this.game.specialFood.y
+      ) {
         score += 50;
 
         // Remove it from the canvas if eaten
-        specialFood.x = -1;
-        specialFood.y = -1;
+        this.game.specialFood.x = -1;
+        this.game.specialFood.y = -1;
       }
     }
 
     // Normal food management.
-    if (head.x === food.x && head.y === food.y) {
-      score += 10;
+    if (head.x === this.game.food.x && head.y === this.game.food.y) {
+      this.game.score += 10;
 
       // Only reset special food when normal food is eaten
-      if (specialFood.active && specialFood.expiration <= 0) {
-        specialFood.active = false;
+      if (
+        this.game.specialFood.active &&
+        this.game.specialFood.expiration <= 0
+      ) {
+        this.game.specialFood.active = false;
       }
-      generateFood();
+      generate();
     } else {
-      snake.pop();
+      this.segments.pop();
     }
   }
 
