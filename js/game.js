@@ -173,7 +173,7 @@ class Game {
           break;
         case "d":
         case "l":
-          this.snake.down();
+          this.snake.right();
           break;
       }
 
@@ -327,39 +327,48 @@ class Snake extends Entity {
     this.directionQueue.push({ dx: -1, dy: 0 });
   }
 
-  update(_deltaTime) {
+  processDirectionChange() {
     // TODO: Check if needed, should be the game to avoid it
-    if (this.game.isPaused) return;
-
-    // Get the next direction from the queue if available
-    if (this.directionQueue.length > 0) {
-      const nextDir = this.directionQueue.shift();
-
-      // Only apply the direction if it's valid relative to the current direction
-      if (
-        (nextDir.dx === 0 && this.currentDirection.dx === 0) ||
-        (nextDir.dy === 0 && this.currentDirection.dy === 0) ||
-        (nextDir.dx !== -this.currentDirection.dx &&
-          nextDir.dy !== -this.currentDirection.dy)
-      ) {
-        this.currentDirection.dx = nextDir.dx;
-        this.currentDirection.dy = nextDir.dy;
-      }
-
-      // If we still have directions in the queue, ensure the next one is valid
-      if (this.directionQueue.length > 0) {
-        const nextQueuedDir = this.directionQueue[0];
-        // Check if the next direction would be valid after applying the current one
-        if (
-          nextQueuedDir.dx === -this.currentDirection.dx &&
-          nextQueuedDir.dy === -this.currentDirection.dy
-        ) {
-          // Invalid direction (would cause immediate game over), remove it
-          this.directionQueue.shift();
-        }
-      }
+    if (this.game.isPaused) {
+      // Empty the directions queue
+      console.log("Empty the queue as game is paused");
+      this.directionQueue = [];
     }
 
+    if (this.directionQueue.length === 0) {
+      return;
+    }
+
+    const nextDir = this.directionQueue.shift();
+    console.log("Next direction");
+
+    // Idempotent direction, skip
+    if (
+      nextDir.dx === this.currentDirection.dx &&
+      nextDir.dy === this.currentDirection.dy
+    )
+      return;
+    // Opposite direction, it would cause game over, skip
+    if (
+      nextDir.dx === -this.currentDirection.dx &&
+      nextDir.dy === -this.currentDirection.dy
+    )
+      return;
+
+    // Get the next direction from the queue if available
+    console.log(
+      `Direction ${JSON.stringify(nextDir)}, ${JSON.stringify(this.currentDirection)}`,
+    );
+
+    // Otherwise, apply the direction
+    this.currentDirection.dx = nextDir.dx;
+    this.currentDirection.dy = nextDir.dy;
+  }
+
+  update(_deltaTime) {
+    this.processDirectionChange();
+
+    // Process snake movement and eating
     const head = {
       x: this.segments[0].x + this.currentDirection.dx,
       y: this.segments[0].y + this.currentDirection.dy,
@@ -371,27 +380,28 @@ class Snake extends Entity {
     if (head.y >= this.game.tileCount) head.y = 0;
     if (head.y < 0) head.y = this.game.tileCount - 1;
 
+    // New head
     this.segments.unshift(head);
 
     // Special food management.
     if (this.game.specialFood.active && this.game.specialFood.expiration > 0) {
+      // TODO: Must be handled in the SpecialFood class
       this.game.specialFood.expiration--;
 
+      // TODO: Must be handled in the SpecialFood class
       // Remove it from the canvas if expired
       if (this.game.specialFood.expiration <= 0) {
         this.game.specialFood.x = -1;
         this.game.specialFood.y = -1;
       }
 
+      // Eating the
       if (
         head.x === this.game.specialFood.x &&
         head.y === this.game.specialFood.y
       ) {
-        score += 50;
-
         // Remove it from the canvas if eaten
-        this.game.specialFood.x = -1;
-        this.game.specialFood.y = -1;
+        this.game.specialFood.eat();
       }
     }
 
@@ -408,6 +418,7 @@ class Snake extends Entity {
       }
       this.game.food.eat();
     } else {
+      // If no eating, keep the snake of the same length
       this.segments.pop();
     }
   }
@@ -483,6 +494,13 @@ class SpecialFood extends Entity {
     this.rate = rate;
     this.expiration = expiration;
     this.active = false;
+  }
+
+  eat() {
+    this.game.score += 50;
+    this.x = -1;
+    this.y = -1;
+    this.expiration = 0;
   }
 
   // TODO: Improve, using proper collision detection
