@@ -64,7 +64,7 @@ class Game {
     }
 
     this.lastTime = currentTime;
-    this.update(deltaTime);
+    this.update();
     this.render();
 
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -113,7 +113,7 @@ class Game {
     return this.snake.isSelfTouching();
   }
 
-  update(_deltaTime) {
+  update() {
     if (this.checkGameOver()) {
       this.isOver = true;
       this.isPaused = true;
@@ -203,7 +203,7 @@ class Entity {
     this.game = game;
   }
 
-  update(_deltaTime) {}
+  update() {}
   render() {}
 }
 
@@ -216,7 +216,7 @@ class Message extends Entity {
     this.display = "none";
   }
 
-  update(_deltaTime) {
+  update() {
     if (this.game.isPaused) {
       this.set(this.defaultText);
     } else if (this.game.isOver) {
@@ -234,13 +234,6 @@ class Message extends Entity {
 
   set(text) {
     this.text = text;
-  }
-
-  hide() {
-    this.display = "none";
-  }
-
-  show() {
     this.display = "block";
   }
 
@@ -328,10 +321,7 @@ class Snake extends Entity {
   }
 
   processDirectionChange() {
-    // TODO: Check if needed, should be the game to avoid it
     if (this.game.isPaused) {
-      // Empty the directions queue
-      console.log("Empty the queue as game is paused");
       this.directionQueue = [];
     }
 
@@ -365,7 +355,9 @@ class Snake extends Entity {
     this.currentDirection.dy = nextDir.dy;
   }
 
-  update(_deltaTime) {
+  update() {
+    if (this.game.isPaused || this.game.isOver) return;
+
     this.processDirectionChange();
 
     // Process snake movement and eating
@@ -395,7 +387,7 @@ class Snake extends Entity {
         this.game.specialFood.y = -1;
       }
 
-      // Eating the
+      // Special food management.
       if (
         head.x === this.game.specialFood.x &&
         head.y === this.game.specialFood.y
@@ -471,7 +463,7 @@ class Food extends Entity {
     this.generate();
   }
 
-  update(_deltaTime) {}
+  update() {}
 
   render() {
     this.game.ctx.fillStyle = getComputedStyle(document.documentElement)
@@ -534,7 +526,7 @@ class SpecialFood extends Entity {
     this.active = true;
   }
 
-  update(_deltaTime) {
+  update() {
     if (this.expiration <= 0 || this.x < 0 || this.y < 0) {
       this.active = false;
       return;
