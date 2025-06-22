@@ -54,7 +54,10 @@ class Game {
   }
 
   gameLoop(currentTime) {
-    const deltaTime = (currentTime - this.lastTime) / 1000;
+    if (!this.started) return;
+
+    const deltaTime = (currentTime - this.lastTime) * 1000;
+    console.log(deltaTime, this.speed);
 
     // TODO: Check if this is correct, or we can update in the meantime
     if (deltaTime < this.speed) {
@@ -66,6 +69,7 @@ class Game {
     this.update(deltaTime);
     this.render();
 
+    console.log(`New Frame at ${currentTime} after ${deltaTime}`);
     requestAnimationFrame(this.gameLoop.bind(this));
   }
 
@@ -87,7 +91,7 @@ class Game {
     this.isOver = false;
     this.started = false;
     this.isPaused = false;
-    this.speed = 100;
+    this.speed = 10000;
     this.lastTime = 0;
   }
 
@@ -101,7 +105,7 @@ class Game {
 
   start() {
     this.started = true;
-    this.isPaused = false;
+    requestAnimationFrame(this.gameLoop.bind(this));
   }
 
   stop() {
@@ -405,7 +409,7 @@ class Snake extends Entity {
       ) {
         this.game.specialFood.active = false;
       }
-      generate();
+      this.game.food.eat();
     } else {
       this.segments.pop();
     }
@@ -432,6 +436,7 @@ class Food extends Entity {
     this.x = -1;
     this.y = -1;
     this.eaten = 0;
+    this.active = false;
   }
 
   generate() {
@@ -451,8 +456,14 @@ class Food extends Entity {
     this.eaten++;
   }
 
+  eat() {
+    this.active = false;
+  }
+
   update(_deltaTime) {
-    this.generate();
+    if (!this.active) {
+      this.generate();
+    }
   }
 
   render() {
@@ -533,6 +544,5 @@ class SpecialFood extends Entity {
 
 (() => {
   const game = new Game();
-  console.log(validKeys);
-  game.gameLoop();
+  game.start();
 })();
