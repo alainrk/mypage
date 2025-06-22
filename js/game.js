@@ -1,51 +1,52 @@
 const helpMessage = "[WASD/HJKL] Move [P] Pause/Resume [R] Restart";
+const validKeys = new Set(
+  Array.from([
+    "w",
+    "a",
+    "s",
+    "d",
+    "r",
+    "p",
+    "W",
+    "A",
+    "S",
+    "D",
+    "R",
+    "P",
+    "h",
+    "j",
+    "k",
+    "l",
+    "H",
+    "J",
+    "K",
+    "L",
+  ]),
+);
 
 class InputManager {
   constructor(game) {
     this.game = game;
-    this.validKeys = new Set(
-      ...Array.from([
-        "w",
-        "a",
-        "s",
-        "d",
-        "r",
-        "p",
-        "W",
-        "A",
-        "S",
-        "D",
-        "R",
-        "P",
-        "h",
-        "j",
-        "k",
-        "l",
-        "H",
-        "J",
-        "K",
-        "L",
-      ]),
-    );
-
     this.setupEventListeners();
   }
 
   setupEventListeners() {
     document.addEventListener("keydown", (e) => {
-      if (!this.validKeys.has(key)) return;
-      game.enqueuePressedKey(key);
+      if (!validKeys.has(e.key)) return;
+      this.game.enqueuePressedKey(e.key);
     });
   }
 }
 
 class Game {
   constructor() {
-    this.input = new InputManager();
+    this.input = new InputManager(this);
     this.canvas = document.getElementById("canvas");
     this.ctx = this.canvas.getContext("2d");
     this.gridSize = 20;
     this.tileCount = this.canvas.width / this.gridSize;
+
+    this.reset();
   }
 
   enqueuePressedKey(key) {
@@ -56,7 +57,7 @@ class Game {
     const deltaTime = (currentTime - this.lastTime) / 1000;
 
     // TODO: Check if this is correct, or we can update in the meantime
-    if (deltaTime < gameSpeed) {
+    if (deltaTime < this.speed) {
       return;
     }
 
@@ -73,7 +74,7 @@ class Game {
 
     this.message = new Message(
       this,
-      document.getElementsById("message"),
+      document.getElementById("message"),
       helpMessage,
     );
     this.snake = new Snake(this);
@@ -98,9 +99,14 @@ class Game {
     this.isPaused = false;
   }
 
-  start() {}
+  start() {
+    this.started = true;
+    this.isPaused = false;
+  }
 
-  stop() {}
+  stop() {
+    this.started = false;
+  }
 
   checkGameOver() {
     return this.snake.isSelfTouching();
@@ -434,7 +440,7 @@ class Food extends Entity {
 
     // TODO: Improve, using proper collision detection
     // Make sure food doesn't spawn on snake
-    this.game.snake.forEach((segment) => {
+    this.game.snake.segments.forEach((segment) => {
       if (x === segment.x && y === segment.y) {
         generate();
       }
@@ -445,7 +451,7 @@ class Food extends Entity {
     this.eaten++;
   }
 
-  update(deltaTime) {
+  update(_deltaTime) {
     this.generate();
   }
 
@@ -524,3 +530,9 @@ class SpecialFood extends Entity {
     );
   }
 }
+
+(() => {
+  const game = new Game();
+  console.log(validKeys);
+  game.gameLoop();
+})();
