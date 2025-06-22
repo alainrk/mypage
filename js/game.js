@@ -56,20 +56,17 @@ class Game {
   gameLoop(currentTime) {
     if (!this.started) return;
 
-    const deltaTime = (currentTime - this.lastTime) * 1000;
-    console.log(deltaTime, this.speed);
+    const deltaTime = currentTime - this.lastTime;
 
-    // TODO: Check if this is correct, or we can update in the meantime
-    // if (deltaTime < this.speed) {
-    //   return;
-    // }
+    if (deltaTime < this.speed) {
+      requestAnimationFrame(this.gameLoop.bind(this));
+      return;
+    }
 
     this.lastTime = currentTime;
-
     this.update(deltaTime);
     this.render();
 
-    console.log(`New Frame at ${currentTime} after ${deltaTime}`);
     requestAnimationFrame(this.gameLoop.bind(this));
   }
 
@@ -91,7 +88,7 @@ class Game {
     this.isOver = false;
     this.started = false;
     this.isPaused = false;
-    this.speed = 10000;
+    this.speed = 100;
     this.lastTime = 0;
   }
 
@@ -120,7 +117,7 @@ class Game {
     if (this.checkGameOver()) {
       this.isOver = true;
       this.isPaused = true;
-      this.message.set(`Game Over! Score: ${score}. Press R to restart.`);
+      this.message.set(`Game Over! Score: ${this.score}. Press R to restart.`);
     }
 
     while (this.keysQueue.length) {
@@ -176,7 +173,7 @@ class Game {
           break;
         case "d":
         case "l":
-          this.snake.up();
+          this.snake.down();
           break;
       }
 
