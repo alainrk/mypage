@@ -191,8 +191,11 @@
       <section id="snake">
         <canvas id="canvas" width="400" height="400"></canvas>
         <div id="message">[WASD] to move, P/R pause/restart.</div>
-        <div id="controlPanel">
-          <button id="autoPlayButton" title="AI uses A* pathfinding" disabled>
+        <div class="mt-4" id="controlPanel">
+          <button
+            id="autoPlayButton"
+            class="btn text-white font-bold py-2 px-4 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
             Lazy? Start AI
           </button>
         </div>
@@ -420,7 +423,7 @@
       | <a href="https://github.com/alainrk" target="_blank">github</a> |
       <a href="https://blog.alaindichiappari.dev/" target="_blank">blog</a>
     </div>
-    <script src="js/snake.js"></script>
+    <script src="js/game.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
