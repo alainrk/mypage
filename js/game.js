@@ -125,6 +125,7 @@ class Game {
       this.isOver = true;
       this.isPaused = true;
       this.message.set(`Game Over! Score: ${this.score}. Press R to restart.`);
+      this.message.update();
     }
 
     while (this.keysQueue.length) {
@@ -224,10 +225,10 @@ class Message extends Entity {
   }
 
   update() {
-    if (this.game.isPaused) {
-      this.set(this.defaultText);
-    } else if (this.game.isOver) {
+    if (this.game.isOver) {
       this.set(`Game Over! Score: ${this.game.score}. Press R to restart.`);
+    } else if (this.game.isPaused) {
+      this.set(this.defaultText);
     } else if (
       !this.game.isOver &&
       !this.game.isPaused &&
