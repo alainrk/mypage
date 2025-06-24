@@ -80,7 +80,7 @@ class Game {
     );
     this.snake = new Snake(this);
     this.food = new Food(this);
-    this.specialFood = new SpecialFood(this, 5, 20);
+    this.specialFood = new SpecialFood(this, 1, 2000);
 
     this.entities = [this.message, this.snake, this.food, this.specialFood];
 
@@ -114,6 +114,10 @@ class Game {
   }
 
   update() {
+    // Update score
+    this.score = this.food.eaten * 10 + this.specialFood.eaten * 50;
+
+    // Check game over
     if (this.checkGameOver()) {
       this.isOver = true;
       this.isPaused = true;
@@ -152,7 +156,7 @@ class Game {
       }
 
       // Any valid key otherwise is ok to start the game if it's not running.
-      if (!this.started && this.input.validKeys.has(key)) {
+      if (!this.started && validKeys.has(key)) {
         this.started = true;
         continue;
       }
@@ -330,7 +334,6 @@ class Snake extends Entity {
     }
 
     const nextDir = this.directionQueue.shift();
-    console.log("Next direction");
 
     // Idempotent direction, skip
     if (
@@ -344,11 +347,6 @@ class Snake extends Entity {
       nextDir.dy === -this.currentDirection.dy
     )
       return;
-
-    // Get the next direction from the queue if available
-    console.log(
-      `Direction ${JSON.stringify(nextDir)}, ${JSON.stringify(this.currentDirection)}`,
-    );
 
     // Otherwise, apply the direction
     this.currentDirection.dx = nextDir.dx;
@@ -399,15 +397,8 @@ class Snake extends Entity {
 
     // Normal food management.
     if (head.x === this.game.food.x && head.y === this.game.food.y) {
-      this.game.score += 10;
-
       // Only reset special food when normal food is eaten
-      if (
-        this.game.specialFood.active &&
-        this.game.specialFood.expiration <= 0
-      ) {
-        this.game.specialFood.active = false;
-      }
+      this.game.specialFood.generate();
       this.game.food.eat();
     } else {
       // If no eating, keep the snake of the same length
@@ -486,13 +477,14 @@ class SpecialFood extends Entity {
     this.rate = rate;
     this.expiration = expiration;
     this.active = false;
+    this.eaten = 0;
   }
 
   eat() {
-    this.game.score += 50;
     this.x = -1;
     this.y = -1;
     this.expiration = 0;
+    this.eaten++;
   }
 
   // TODO: Improve, using proper collision detection
@@ -507,8 +499,8 @@ class SpecialFood extends Entity {
     )
       return;
 
-    const x = Math.floor(Math.random() * tileCount);
-    const y = Math.floor(Math.random() * tileCount);
+    const x = Math.floor(Math.random() * this.game.tileCount);
+    const y = Math.floor(Math.random() * this.game.tileCount);
 
     // Make sure food doesn't spawn on normal food
     if (x === this.game.food.x && y === this.game.food.y) {
@@ -516,7 +508,7 @@ class SpecialFood extends Entity {
     }
 
     // Make sure food doesn't spawn on snake
-    this.game.snake.forEach((segment) => {
+    this.game.snake.segments.forEach((segment) => {
       if (x === segment.x && y === segment.y) {
         this.generate();
       }
@@ -527,6 +519,12 @@ class SpecialFood extends Entity {
   }
 
   update() {
+    this.expiration--;
+
+    if (this.active && this.expiration <= 0) {
+      this.active = false;
+    }
+
     if (this.expiration <= 0 || this.x < 0 || this.y < 0) {
       this.active = false;
       return;
