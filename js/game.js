@@ -90,6 +90,8 @@ class Game {
     this.isPaused = false;
     this.speed = 100;
     this.lastTime = 0;
+
+    this.started = true;
   }
 
   pause() {
