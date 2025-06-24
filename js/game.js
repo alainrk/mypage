@@ -80,7 +80,7 @@ class Game {
     );
     this.snake = new Snake(this);
     this.food = new Food(this);
-    this.specialFood = new SpecialFood(this, 1, 2000);
+    this.specialFood = new SpecialFood(this, 5, 4000);
 
     this.entities = [this.message, this.snake, this.food, this.specialFood];
 
@@ -102,6 +102,7 @@ class Game {
     this.isPaused = false;
   }
 
+  // NOTE: To be called only once at the initialization of the page, as it calls requestAnimationFrame().
   start() {
     this.started = true;
     requestAnimationFrame(this.gameLoop.bind(this));
@@ -376,18 +377,7 @@ class Snake extends Entity {
     this.segments.unshift(head);
 
     // Special food management.
-    if (this.game.specialFood.active && this.game.specialFood.expiration > 0) {
-      // TODO: Must be handled in the SpecialFood class
-      this.game.specialFood.expiration--;
-
-      // TODO: Must be handled in the SpecialFood class
-      // Remove it from the canvas if expired
-      if (this.game.specialFood.expiration <= 0) {
-        this.game.specialFood.x = -1;
-        this.game.specialFood.y = -1;
-      }
-
-      // Special food management.
+    if (this.game.specialFood.active) {
       if (
         head.x === this.game.specialFood.x &&
         head.y === this.game.specialFood.y
@@ -400,8 +390,8 @@ class Snake extends Entity {
     // Normal food management.
     if (head.x === this.game.food.x && head.y === this.game.food.y) {
       // Only reset special food when normal food is eaten
-      this.game.specialFood.generate();
       this.game.food.eat();
+      this.game.specialFood.counterToSpawn--;
     } else {
       // If no eating, keep the snake of the same length
       this.segments.pop();
@@ -435,19 +425,25 @@ class Food extends Entity {
   }
 
   generate() {
-    const x = Math.floor(Math.random() * this.game.tileCount);
-    const y = Math.floor(Math.random() * this.game.tileCount);
+    while (true) {
+      const x = Math.floor(Math.random() * this.game.tileCount);
+      const y = Math.floor(Math.random() * this.game.tileCount);
 
-    // TODO: Improve, using proper collision detection
-    // Make sure food doesn't spawn on snake
-    this.game.snake.segments.forEach((segment) => {
-      if (x === segment.x && y === segment.y) {
-        this.generate();
+      // TODO: Improve using proper collision detection somewhere
+      // Make sure food doesn't spawn on snake
+      let skip = false;
+      for (let segment of this.game.snake.segments) {
+        if (x === segment.x && y === segment.y) {
+          skip = true;
+          break;
+        }
       }
-    });
+      if (skip) continue;
 
-    this.x = x;
-    this.y = y;
+      this.x = x;
+      this.y = y;
+      break;
+    }
   }
 
   eat() {
@@ -477,67 +473,65 @@ class SpecialFood extends Entity {
     this.x = -1;
     this.y = -1;
     this.rate = rate;
+    this.counterToSpawn = rate;
     this.expiration = expiration;
+    this.lastCreation = null;
     this.active = false;
     this.eaten = 0;
   }
 
   eat() {
-    this.x = -1;
-    this.y = -1;
-    this.expiration = 0;
     this.eaten++;
+    this.active = false;
+    this.counterToSpawn = this.rate;
   }
 
-  // TODO: Improve, using proper collision detection
   generate() {
-    if (
-      // Special food already created.
-      this.active ||
-      // Wait at least the minimum rate to generate the first special food.
-      this.game.food.eaten < this.rate ||
-      // Wait the rate-th occurrence of normal food.
-      this.game.food.eaten % this.rate !== 0
-    )
-      return;
+    while (true) {
+      const x = Math.floor(Math.random() * this.game.tileCount);
+      const y = Math.floor(Math.random() * this.game.tileCount);
 
-    const x = Math.floor(Math.random() * this.game.tileCount);
-    const y = Math.floor(Math.random() * this.game.tileCount);
-
-    // Make sure food doesn't spawn on normal food
-    if (x === this.game.food.x && y === this.game.food.y) {
-      this.generate();
-    }
-
-    // Make sure food doesn't spawn on snake
-    this.game.snake.segments.forEach((segment) => {
-      if (x === segment.x && y === segment.y) {
-        this.generate();
+      // Make sure food doesn't spawn on normal food
+      if (x === this.game.food.x && y === this.game.food.y) {
+        continue;
       }
-    });
 
-    this.expiration = 50;
-    this.active = true;
+      // TODO: Improve using proper collision detection somewhere
+      // Make sure food doesn't spawn on snake
+      let skip = false;
+      for (let segment of this.game.snake.segments) {
+        if (x === segment.x && y === segment.y) {
+          skip = true;
+          break;
+        }
+      }
+      if (skip) continue;
+
+      this.x = x;
+      this.y = y;
+      this.lastCreation = Date.now();
+      this.active = true;
+      break;
+    }
   }
 
   update() {
-    this.expiration--;
-
-    if (this.active && this.expiration <= 0) {
-      this.active = false;
+    // Update active special food if any.
+    if (this.active) {
+      if (Date.now() - (this.lastCreation ?? 0) > this.expiration) {
+        this.active = false;
+        this.counterToSpawn = this.rate;
+      }
     }
 
-    if (this.expiration <= 0 || this.x < 0 || this.y < 0) {
-      this.active = false;
-      return;
+    // Check if we need to regenerate.
+    if (!this.active && this.counterToSpawn === 0) {
+      this.generate();
     }
-
-    this.generate();
   }
 
   render() {
     if (!this.active) return;
-
     this.game.ctx.fillStyle = "red";
     this.game.ctx.fillRect(
       this.x * this.game.gridSize,
